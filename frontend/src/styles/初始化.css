@@ -1,0 +1,52 @@
+html,
+body,
+ul,
+li,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+div {
+    margin: 0;
+    padding: 0;
+}
+
+ul,
+li {
+    list-style: none
+}
+
+a {
+    text-decoration: none;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    /* 垂直滚动条宽度 */
+    height: 8px;
+    /* 水平滚动条高度 */
+}
+
+::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: linear-gradient(180deg,
+            #4DA6FF 0%,
+            #A64DFF 50%,
+            #821ce9 100%);
+}
+
+/* 水平滚动条拇指单独设置渐变方向 */
+::-webkit-scrollbar-thumb:horizontal {
+    background: linear-gradient(90deg,
+            #4DA6FF 0%,
+            #A64DFF 50%,
+            #821ce9 100%);
+}
