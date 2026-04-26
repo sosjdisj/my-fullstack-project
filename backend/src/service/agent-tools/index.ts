@@ -6,6 +6,7 @@ import { categoriesTools } from '@/service/agent-tools/categories.tools';
 import { timelineTools } from '@/service/agent-tools/timeline.tools';
 import { treeholeTools } from '@/service/agent-tools/treehole.tools';
 import { quotesTools } from '@/service/agent-tools/quotes.tools';
+import { interactionTools } from '@/service/agent-tools/interaction.tools';
 
 export const allTools = [
     ...articleTools,
@@ -15,5 +16,6 @@ export const allTools = [
     ...categoriesTools,
     ...timelineTools,
     ...treeholeTools,
-    ...quotesTools
+    ...quotesTools,
+    ...interactionTools
 ];
