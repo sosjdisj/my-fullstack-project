@@ -1,15 +1,16 @@
-import { useCounterStore } from "@/stores/counter";
+import { useUserStore } from "@/stores/user";
 import axios from "axios";
 import { ElMessage } from 'element-plus'
 import { clearUser, saveUserInfo } from '@/utils/helpers'
 
 const service = axios.create({
-    baseURL: 'http://localhost:3001/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
     timeout: 180000,
     withCredentials: true
 })
 
 let isRefreshing = false;
+let pendingRequests: Array<(token: string) => void> = [];
 
 service.interceptors.request.use(function (config) {
     const token = localStorage.getItem('token')
@@ -39,11 +40,10 @@ service.interceptors.response.use(
         if (status === 401 && !config.url.includes('/auth')) {
 
             if (!isRefreshing) {
-
                 isRefreshing = true
 
                 try {
-                    const res = await axios.post('http://localhost:3001/api/auth/refresh-token', {}, {
+                    const res = await axios.post(`${service.defaults.baseURL}/auth/refresh-token`, {}, {
                         withCredentials: true
                     });
 
@@ -51,7 +51,7 @@ service.interceptors.response.use(
                         const Data = res.data.data
                         const newToken = Data.token;
 
-                        const store = useCounterStore();
+                        const store = useUserStore();
 
                         saveUserInfo(store, {
                             username: Data.username,
@@ -60,19 +60,30 @@ service.interceptors.response.use(
                             signature: Data.signature
                         })
 
-                        config.headers.Authorization = `Bearer ${newToken}`;
-
+                        // 刷新成功，重放所有排队请求
+                        pendingRequests.forEach(cb => cb(newToken))
+                        pendingRequests = []
                         isRefreshing = false;
 
+                        config.headers.Authorization = `Bearer ${newToken}`;
                         return service(config);
                     }
                 } catch (refreshError) {
+                    // 刷新失败，清空排队请求
+                    pendingRequests = []
+                    isRefreshing = false;
                     clearUser()
                     ElMessage.error('登录已过期，请重新登录');
                     return Promise.reject(refreshError);
                 }
             } else {
-                return Promise.reject(error);
+                // 正在刷新，将请求排队等待新 token 后重试
+                return new Promise((resolve) => {
+                    pendingRequests.push((newToken: string) => {
+                        config.headers.Authorization = `Bearer ${newToken}`;
+                        resolve(service(config));
+                    });
+                });
             }
 
         }

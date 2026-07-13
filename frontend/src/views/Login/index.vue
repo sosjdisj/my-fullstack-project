@@ -2,7 +2,7 @@
     <div class="login">
 
         <div class="bg-image">
-            <img src="/src/assets/【哲风壁纸】8k-个性背景.png" alt="">
+            <img src="/src/assets/18390764516330880.jpg" alt="">
         </div>
 
         <div class="login-right">
@@ -12,7 +12,7 @@
                     updata="username" placeholder="用户名" />
 
                 <FormInput @update-form-field="handUpdataPassword" @hand-check="checkPassword" :errors="errors"
-                    updata="password" placeholder="密码" />
+                    updata="password" placeholder="密码" type="password" />
 
                 <br>
                 <div class="action-bar">

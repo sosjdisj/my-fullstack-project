@@ -44,5 +44,8 @@ const CommentsSchema: Schema = new Schema({
     }
 })
 
+CommentsSchema.index({ articleId: 1, reviewStatus: 1, deleted: 1 });
+CommentsSchema.index({ userId: 1, createTime: -1 });
+
 const Comments = mongoose.model<IComments>('articles_comments', CommentsSchema);
 export default Comments;

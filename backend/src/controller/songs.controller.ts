@@ -48,18 +48,18 @@ export async function getSingleChart(req: Request, res: Response) {
 }
 
 export async function getlikeSongs(req: Request, res: Response) {
-    // const user = getAuthenticatedUser(req, res)
+    const user = getAuthenticatedUser(req, res)
 
-    // if (!user) return
+    if (!user) return
 
     const validateResult = validateParams(req.query, res, PageQuerySchema)
 
     if (!validateResult.valid) return
 
-    // const { userId } = user
+    const { userId } = user
     const { page, size } = validateResult.data
 
-    const likeSone = await songsService.getlikeSongs(1, page, size)
+    const likeSone = await songsService.getlikeSongs(userId, page, size)
 
     return res.status(200).json({
         code: 200,
@@ -137,3 +137,4 @@ export async function unlikeSongs(req: Request, res: Response) {
         }
     })
 }
+

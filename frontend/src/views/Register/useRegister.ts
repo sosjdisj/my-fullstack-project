@@ -1,6 +1,6 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useCounterStore } from '@/stores/counter'
+import { useUserStore } from '@/stores/user'
 import { validateLogin } from '@/utils/validation'
 import { handleValidationResult, validateField } from '@/utils/validation'
 import { post } from '@/api/request'
@@ -11,7 +11,7 @@ import { sha256 } from '@/utils/crypto'
 
 export function useRegister() {
   const router = useRouter()
-  const store = useCounterStore()
+  const store = useUserStore()
 
   const Register = reactive({
     username: '',

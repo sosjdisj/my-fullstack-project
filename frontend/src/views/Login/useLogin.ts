@@ -2,7 +2,7 @@ import { reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { validateLogin, handleValidationResult, validateField } from '@/utils/validation'
 import { post } from '@/api/request'
-import { useCounterStore } from '@/stores/counter'
+import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { useFormValidation } from '@/composables/useFormValidation'
 import { saveUserInfo } from '@/utils/helpers'
@@ -11,7 +11,7 @@ import { sha256 } from '@/utils/crypto'
 export function useLogin() {
   const router = useRouter()
   const route = useRoute()
-  const store = useCounterStore()
+  const store = useUserStore()
 
   const LoginData = reactive({
     username: '',

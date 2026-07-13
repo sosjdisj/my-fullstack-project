@@ -2,6 +2,7 @@ import Playlists from '@/models/Playlists'
 import Songs from '@/models/Songs'
 import UserLikeSongs from '@/models/UserLikeSongs'
 import UserCollectPlaylists from '@/models/UserCollectPlaylists'
+import mongoose from 'mongoose'
 
 export async function getPlaylist(limit: number) {
     const filter = { deleted: { $ne: true } }
@@ -65,39 +66,56 @@ export async function getUserLikedSongIds(userId: number, songIds: string[]) {
 
 //收藏歌单
 export async function collectPlaylist(userId: number, playlistId: string) {
-    const [_, __, totalFavorites] = await Promise.all([
-        Playlists.updateOne(
-            { _id: playlistId },
-            {
-                $inc: { collects: 1 }
-            }
-        ),
-        UserCollectPlaylists.updateOne(
-            { userId, playlistId },
-            { isCanceled: true },
-            { upsert: true }
-        ),
-        Playlists.findOne({ _id: playlistId }).select('collects')
-    ])
-    return totalFavorites?.collects as number
+    const session = await mongoose.startSession()
+    try {
+        session.startTransaction()
+        const [updated] = await Promise.all([
+            Playlists.findOneAndUpdate(
+                { _id: playlistId },
+                { $inc: { collects: 1 } },
+                { select: 'collects', returnDocument: 'after', session }
+            ),
+            UserCollectPlaylists.updateOne(
+                { userId, playlistId },
+                { isCanceled: true },
+                { upsert: true, session }
+            ),
+        ])
+        await session.commitTransaction()
+        return updated?.collects as number
+    } catch (err) {
+        await session.abortTransaction()
+        throw err
+    } finally {
+        session.endSession()
+    }
 }
 
 //取消歌单收藏
 export async function uncollectPlaylist(userId: number, playlistId: string) {
-    const [_, __, totalFavorites] = await Promise.all([
-        Playlists.updateOne(
-            { _id: playlistId, collects: { $gt: 0 } },
-            {
-                $inc: { collects: -1 }
-            }
-        ),
-        UserCollectPlaylists.updateOne(
-            { userId, playlistId },
-            { isCanceled: false },
-        ),
-        Playlists.findOne({ _id: playlistId }).select('collects')
-    ])
-    return totalFavorites?.collects as number
+    const session = await mongoose.startSession()
+    try {
+        session.startTransaction()
+        const [updated] = await Promise.all([
+            Playlists.findOneAndUpdate(
+                { _id: playlistId, collects: { $gt: 0 } },
+                { $inc: { collects: -1 } },
+                { select: 'collects', returnDocument: 'after', session }
+            ),
+            UserCollectPlaylists.updateOne(
+                { userId, playlistId },
+                { isCanceled: false },
+                { session }
+            ),
+        ])
+        await session.commitTransaction()
+        return updated?.collects as number
+    } catch (err) {
+        await session.abortTransaction()
+        throw err
+    } finally {
+        session.endSession()
+    }
 }
 
 // 获取用户收藏的歌单

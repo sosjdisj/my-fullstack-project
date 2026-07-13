@@ -9,7 +9,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 import lazy from '@/directives/lazyBg'
 import microApp from '@micro-zoe/micro-app'
 
-// enableMocking().then(() => {
+
 const app = createApp(App)
 
 app.use(createPinia())
@@ -18,9 +18,7 @@ app.use(ElementPlus)
 
 // 注册背景图懒加载指令
 app.directive('lazy', lazy)
-microApp.start({
-  'iframe': true
-})
-app.mount('#app')
-
+// microApp.start({
+//   'iframe': true
 // })
+app.mount('#app')

@@ -8,8 +8,8 @@ dotenv.config();
 // 数据库连接函数
 const connectDB = async () => {
     try {
-        // 连接 MongoDB（本地地址，testDB 是数据库名）
-        const conn = await mongoose.connect('mongodb://localhost:27017/myblog');
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/myblog';
+        const conn = await mongoose.connect(mongoUri);
 
         console.log(`MongoDB 连接成功: ${conn.connection.host}`);
     } catch (error) {
@@ -19,10 +19,10 @@ const connectDB = async () => {
 };
 
 const adapter = new PrismaMariaDb({
-    host: "localhost",
-    user: "root",
-    password: '2369',
-    database: "myblog",
+    host: process.env.MYSQL_HOST || "localhost",
+    user: process.env.MYSQL_USER || "root",
+    password: process.env.MYSQL_PASSWORD || '',
+    database: process.env.MYSQL_DB || "myblog",
     connectionLimit: 10,
     allowPublicKeyRetrieval: true
 });

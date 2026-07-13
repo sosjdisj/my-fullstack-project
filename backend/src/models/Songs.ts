@@ -6,7 +6,7 @@ export interface ISongs extends Document {
     cover: string
     duration: string
     playback: number,
-    playlist_id: Types.ObjectId
+    playlist_id?: Types.ObjectId
     likes: number
     song_tags: Types.ObjectId
     deleted: boolean
@@ -40,7 +40,7 @@ const SongsSchema: Schema = new Schema({
     },
     playlist_id: {
         type: Types.ObjectId,
-        required: true,
+        required: false,
         trim: true
     },
     likes: {
@@ -59,6 +59,9 @@ const SongsSchema: Schema = new Schema({
 }, {
     timestamps: true
 })
+
+SongsSchema.index({ playlist_id: 1 });
+SongsSchema.index({ deleted: 1, song_tags: 1, playback: -1 });
 
 // 创建并导出 Model
 const Songs = mongoose.model<ISongs>('Songs', SongsSchema);

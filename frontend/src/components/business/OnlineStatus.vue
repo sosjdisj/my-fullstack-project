@@ -10,10 +10,10 @@
 </template>
 
 <script lang="ts" setup>
-    import { useCounterStore } from '@/stores/counter'
+    import { useAppStore } from '@/stores/app'
     import { onMounted } from 'vue';
 
-    const store = useCounterStore()
+    const store = useAppStore()
 
     onMounted(() => {
         store.initSocketListeners()

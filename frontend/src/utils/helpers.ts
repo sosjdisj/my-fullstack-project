@@ -1,14 +1,10 @@
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useCounterStore } from '@/stores/counter'
-
-// 🌟 核心优化：封装一个获取 store 的内部函数，统一复用
-function getStore() {
-    return useCounterStore()
-}
+import { useUserStore } from '@/stores/user'
+import { useCacheStore } from '@/stores/cache'
 
 export function clearUser() {
-    const store = getStore()
+    const store = useUserStore()
     store.username = null
     store.avatar = null
     store.signature = ''
@@ -49,7 +45,7 @@ export async function usePaginationCache<T extends Record<string, any>>(
     path: string,
     data?: T
 ) {
-    const store = getStore()
+    const store = useCacheStore()
     //拿缓存
     const getCacheItem = store.getCache(CACHE_NAME, key)
     if (getCacheItem) {
@@ -120,11 +116,6 @@ export const scrollToComment = (el: HTMLElement) => {
 //     sessionStorage.removeItem('token');
 // };
 
-/**
- * 保存用户信息到 store 和 localStorage
- * @param store 目标 store 对象
- * @param data 用户数据
- */
 export function saveUserInfo(
     store: { username: string | null; avatar: string | null; token: string | null, signature: string },
     data: { username: string; avatar: string; signature?: string, token?: string }

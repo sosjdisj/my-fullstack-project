@@ -176,7 +176,7 @@ export function useAiChat() {
         let isFirstChunk = true;
 
         try {
-            await fetchEventSource(`http://localhost:3001/api/chat/${conversationId.value}`, {
+            await fetchEventSource(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/chat/${conversationId.value}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

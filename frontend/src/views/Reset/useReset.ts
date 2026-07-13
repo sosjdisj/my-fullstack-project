@@ -1,22 +1,30 @@
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { validateLogin, handleValidationResult } from '@/utils/validation'
 import { post } from '@/api/request'
 import { ElMessage } from 'element-plus'
 import { useFormValidation } from '@/composables/useFormValidation'
+import { sha256 } from '@/utils/crypto'
 
 export function useReset() {
   const router = useRouter()
   const route = useRoute()
 
+  const smsCode =ref('')
+
   const ResetData = reactive({
-    username: ''
+    username: '',
+    password: '',
   })
 
   const { errors, updateField, validateSingleField, navigateWithClearErrors, hasNoErrors } = useFormValidation(ResetData)
 
   const handUpdataUsername = (newValue: string) => {
     updateField('username', newValue)
+  }
+
+  const handUpdataPassword = (newValue: string) => {
+    updateField('password', newValue)
   }
 
   const checkField = (fieldName: any) => {
@@ -32,7 +40,13 @@ export function useReset() {
     handleValidationResult(result)
 
     if (hasNoErrors()) {
-      const result = await post(route.path, ResetData)
+      const hashedPassword = await sha256(ResetData.password)
+      const payload = {
+        username: ResetData.username,
+        password: hashedPassword,
+        smsCode
+      }
+      const result = await post(route.path, payload)
       if (result) ElMessage.success(result.message)
       router.replace('/login')
     }
@@ -41,7 +55,9 @@ export function useReset() {
   return {
     ResetData,
     errors,
+    smsCode,
     handUpdataUsername,
+    handUpdataPassword,
     checkField,
     Torouter,
     handleReset

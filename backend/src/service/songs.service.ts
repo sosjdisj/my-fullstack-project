@@ -1,6 +1,7 @@
 import Songs from "@/models/Songs";
 import UserLikeSongs from "@/models/UserLikeSongs";
 import SongTag from "@/models/Song_tags";
+import mongoose from "mongoose";
 
 export async function getlikeSongs(userId: number, page: number, size: number) {
     const skip = (page - 1) * size
@@ -25,38 +26,55 @@ export async function getSongLikeStatus(userId: number, songId: string) {
 }
 
 export async function likeSong(userId: number, songId: string) {
-    const [_, __, likes] = await Promise.all([
-        Songs.updateOne(
-            { _id: songId },
-            {
-                $inc: { likes: 1 }
-            }
-        ),
-        UserLikeSongs.updateOne(
-            { userId, songId },
-            { isLiked: true },
-            { upsert: true }
-        ),
-        Songs.findOne({ _id: songId }).select('likes')
-    ])
-    return likes?.likes as number
+    const session = await mongoose.startSession()
+    try {
+        session.startTransaction()
+        const [likes] = await Promise.all([
+            Songs.findOneAndUpdate(
+                { _id: songId },
+                { $inc: { likes: 1 } },
+                { select: 'likes', returnDocument: 'after', session }
+            ),
+            UserLikeSongs.updateOne(
+                { userId, songId },
+                { isLiked: true },
+                { upsert: true, session }
+            )
+        ])
+        await session.commitTransaction()
+        return likes?.likes as number
+    } catch (err) {
+        await session.abortTransaction()
+        throw err
+    } finally {
+        session.endSession()
+    }
 }
 
 export async function unlikeSong(userId: number, songId: string) {
-    const [_, __, likes] = await Promise.all([
-        Songs.updateOne(
-            { _id: songId, likes: { $gt: 0 } },
-            {
-                $inc: { likes: -1 }
-            }
-        ),
-        UserLikeSongs.updateOne(
-            { userId, songId },
-            { isLiked: false },
-        ),
-        Songs.findOne({ _id: songId }).select('likes')
-    ])
-    return likes?.likes as number
+    const session = await mongoose.startSession()
+    try {
+        session.startTransaction()
+        const [likes] = await Promise.all([
+            Songs.findOneAndUpdate(
+                { _id: songId, likes: { $gt: 0 } },
+                { $inc: { likes: -1 } },
+                { select: 'likes', returnDocument: 'after', session }
+            ),
+            UserLikeSongs.updateOne(
+                { userId, songId },
+                { isLiked: false },
+                { session }
+            )
+        ])
+        await session.commitTransaction()
+        return likes?.likes as number
+    } catch (err) {
+        await session.abortTransaction()
+        throw err
+    } finally {
+        session.endSession()
+    }
 }
 
 /**
@@ -67,7 +85,7 @@ export async function getSingleChartData(tagName: string, isNew: boolean = false
     const tag = await SongTag.findOne({
         name: tagName,
         deleted: false,
-        status: 'ACTIVE'
+        status: 'ACTIVE' as const
     }).lean()
 
     if (!tag) return null
@@ -123,3 +141,4 @@ export async function getChartsData(tagNames: string[], limit: number = 5) {
     // 过滤掉不存在的标签
     return results.filter(item => item !== null)
 }
+

@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-  import { useCounterStore } from '@/stores/counter'
+  import { useUserStore } from '@/stores/user'
   import { reactive, computed, ref } from 'vue';
   import { useRoute } from 'vue-router';
   import Avatar from './Avatar.vue'
@@ -115,7 +115,7 @@
       id: '助手'
     }
   ])
-  const store = useCounterStore()
+  const store = useUserStore()
   const username = computed(() => store.username ? store.username : '')
   const isTop = computed(() => !store.username)
 

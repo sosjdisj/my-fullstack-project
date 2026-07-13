@@ -42,13 +42,13 @@
     import { inject, computed } from 'vue'
     import { useRouter } from 'vue-router'
     import type { Article } from '@/types/index'
-    import { useCounterStore } from '@/stores/counter'
+    import { useUserStore } from '@/stores/user'
     import { useRoute } from 'vue-router'
 
     const route = useRoute()
 
     const articleList = inject('ARTICLELIST', [] as Article[])
-    const store = useCounterStore()
+    const store = useUserStore()
     const router = useRouter()
     const LoginStatus = computed(() => store.username)
 

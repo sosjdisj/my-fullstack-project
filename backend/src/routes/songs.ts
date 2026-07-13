@@ -16,7 +16,7 @@ router.delete('/:id/likes', asyncHandler(songsController.unlikeSongs))
 // 获取多个榜单
 router.get('/charts', asyncHandler(songsController.getCharts))
 
-// 获取单个榜单
+//获取单个榜单
 router.get('/charts/:tagName', asyncHandler(songsController.getSingleChart))
 
 export default router

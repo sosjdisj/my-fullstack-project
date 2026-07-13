@@ -4,6 +4,7 @@ import { generateAccessToken, generateToken, verifyToken } from '@/utils/jwt'
 import { codeCache } from '@/controller/sendCode.controller'
 import { registerSchema } from '@/utils/validationSchemas'
 import { validateParams } from '@/utils/validateQueryParams'
+import { getTokenFromRedis, saveTokenToRedis } from '@/service/token.service'
 
 //密码：qw131420#
 
@@ -28,7 +29,44 @@ export async function login(req: Request, res: Response) {
         })
     }
 
-    // 生成token
+    // 🌟 新增：先检查Redis中是否存在该用户的有效token
+    const cachedToken = await getTokenFromRedis(user.user_id)
+
+    if (cachedToken) {
+        // Redis中存在有效token,直接返回（无需重新生成）
+        console.log(`使用Redis缓存的token, userId: ${user.user_id}`)
+
+        // 仍需设置 refreshToken 到 HttpOnly Cookie（因为可能cookie也过期了）
+        const { refreshToken } = generateToken(
+            {
+                userId: user.user_id,
+                username: user.username,
+                cover: user.avatar,
+                signature: user.signature
+            }
+        )
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: '/'
+        })
+
+        return res.status(200).json({
+            code: 200,
+            message: '登录成功（使用缓存token）',
+            data: {
+                token: cachedToken.accessToken,
+                username: user.username,
+                avatar: user.avatar,
+                signature: user.signature
+            }
+        })
+    }
+
+    // Redis中无有效token,生成新token
     const { accessToken, refreshToken } = generateToken(
         {
             userId: user.user_id,
@@ -37,6 +75,13 @@ export async function login(req: Request, res: Response) {
             signature: user.signature
         }
     )
+
+    // 🌟 新增：将accessToken存入Redis（供子应用和主应用共享）
+    await saveTokenToRedis(user.user_id, accessToken, {
+        username: user.username,
+        cover: user.avatar,
+        signature: user.signature
+    })
 
     // 关键：设置 refreshToken 到 HttpOnly Cookie
     res.cookie('refreshToken', refreshToken, {

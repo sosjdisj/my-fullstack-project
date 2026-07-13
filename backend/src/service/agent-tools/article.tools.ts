@@ -21,7 +21,7 @@ export const searchArticlesTool = tool(
     },
     {
         name: "search_articles",
-        description: "根据关键词搜索文章列表...",
+        description: "根据关键词搜索文章列表，返回匹配的文章标题和内容摘要",
         schema: z.object({
             keyword: z.string().describe("搜索关键词"),
             page: z.number().default(1),

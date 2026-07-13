@@ -5,8 +5,8 @@ import Tags from "@/models/Tags"
 // 获取分类列表（分页）
 export async function getCategoriesList(page: number, size: number) {
     const skip = (page - 1) * size
-    const query = { deleted: { $ne: true }, status: 'ACTIVE' };
-    const filter = { deleted: { $ne: true }, status: 'PUBLIC' }
+    const query = { deleted: { $ne: true }, status: 'ACTIVE' as const };
+    const filter = { deleted: { $ne: true }, status: 'PUBLIC' as const }
 
     const categories = await Categories.find(query).select('-deleted -status').skip(skip).limit(size).lean()
 
@@ -42,12 +42,14 @@ export async function getCategoriesList(page: number, size: number) {
 export async function getArticlesByCategory(name: string, page: number, size: number) {
     const skip = (page - 1) * size
 
-    const query = { deleted: { $ne: true }, status: 'ACTIVE' };
-    const activeQuery = { deleted: { $ne: true }, status: 'PUBLIC' };
+    const query = { deleted: { $ne: true }, status: 'ACTIVE' as const };
+    const activeQuery = { deleted: { $ne: true }, status: 'PUBLIC' as const };
 
-    const categoryId = await Categories.findOne({ name, ...query }).select('_id').lean()
+    const category = await Categories.findOne({ name, ...query }).select('_id').lean()
 
-    const articles = await Article.find({ category: categoryId, ...activeQuery })
+    if (!category) return []
+
+    const articles = await Article.find({ category: category._id, ...activeQuery })
         .select('-deleted -status')
         .skip(skip)
         .limit(size)

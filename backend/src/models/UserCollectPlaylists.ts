@@ -23,5 +23,7 @@ const UserCollectPlaylistsSchema: Schema = new Schema({
     }
 });
 
+UserCollectPlaylistsSchema.index({ userId: 1, playlistId: 1 }, { unique: true });
+
 const UserCollectPlaylists = mongoose.model<IUserCollectPlaylists>('user_playlist_collections', UserCollectPlaylistsSchema);
 export default UserCollectPlaylists;

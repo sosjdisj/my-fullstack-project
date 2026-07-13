@@ -3,10 +3,13 @@ import { Server as HttpServer } from 'http';
 import { Server } from 'socket.io';
 
 export const initSocket = (server: HttpServer) => {
+    const allowedOrigins = process.env.CORS_ORIGINS?.split(',').map(s => s.trim()) || ['http://localhost:5173', 'http://localhost:5175'];
+
     const io = new Server(server, {
         cors: {
-            origin: "*", // 生产环境建议配置成具体域名
-            methods: ["GET", "POST"]
+            origin: allowedOrigins,
+            methods: ["GET", "POST"],
+            credentials: true
         }
     });
 

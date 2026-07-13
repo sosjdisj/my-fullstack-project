@@ -8,6 +8,7 @@ import { jwtParser } from '@/middleware/jwtParser';
 import { createServer } from 'http'; // 1. 引入 http
 import { initSocket } from '@/socket/index'
 import cookieParser from 'cookie-parser'; // 1. 引入 cookie-parser
+import { initRagKnowledgeBase } from '@/service/articleChunk.service'
 
 // 加载环境变量
 dotenv.config();
@@ -16,10 +17,11 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 
+const allowedOrigins = process.env.CORS_ORIGINS?.split(',').map(s => s.trim()) || ['http://localhost:5173', 'http://localhost:5175'];
+
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5175'],
+    origin: allowedOrigins,
     credentials: true,
-    // exposedHeaders: ['Content-Type']
 }))
 app.use(cookieParser())
 app.use(express.json());
@@ -33,6 +35,8 @@ const port = 3001;
 initSocket(httpServer)
 // 连接数据库
 connectDB()
+// 初始化 RAG 知识库（确保 Qdrant 集合存在，必要时全量重建）
+initRagKnowledgeBase()
 // 初始化所有路由
 initRoutes(app)
 

@@ -14,9 +14,9 @@
 
 <script setup lang="ts">
   import { ref, onMounted } from 'vue'
-  import { useCounterStore } from '@/stores/counter'
+  import { useUserStore } from '@/stores/user'
 
-  const store = useCounterStore()
+  const store = useUserStore()
   const isCollapsed = ref(false)
 
   onMounted(() => {

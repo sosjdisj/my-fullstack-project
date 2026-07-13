@@ -6,7 +6,10 @@ import type { userInfo } from '@/utils/auth'
 dotenv.config();
 
 // 从环境变量获取秘钥
-const JWT_SECRET = process.env.JWT_SECRET || 'my_very_strong_secret_key';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET 环境变量未设置');
+}
 //短token
 const ACCESS_TOKEN_EXPIRES_IN = '2h'
 //长token

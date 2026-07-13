@@ -2,7 +2,7 @@
     <div class="reset-page">
 
         <div class="bg-image">
-            <img src="/src/ass/【哲风壁纸】伞-和服-少女.png" alt="">
+            <img src="/src/assets/18390764516330880.jpg" alt="">
         </div>
 
         <div class="reset-card">
@@ -17,8 +17,11 @@
                     <FormInput @update-form-field="handUpdataUsername" @hand-check="checkField" :errors="errors"
                         updata="email" placeholder=" 邮箱地址" />
 
+                    <FormInput @update-form-field="handUpdataPassword" @hand-check="checkField" :errors="errors"
+                        updata="password" placeholder="新密码" type="password" />
+
                     <!-- 验证码按钮和输入框组件 -->
-                    <CaptchaInput />
+                    <CaptchaInput :model-value="smsCode" />
                 </div>
 
                 <button type="submit" class="submit-btn">确认重置</button>
@@ -38,12 +41,12 @@
     import CaptchaInput from '@/components/ui/CaptchaInput.vue';
     import { useReset } from './useReset';
 
-    const { errors, handUpdataUsername, checkField, Torouter, handleReset } = useReset()
+    const { errors, smsCode, handUpdataUsername, handUpdataPassword, checkField, Torouter, handleReset } = useReset()
 
 </script>
 
 <style lang="less" scoped>
-    @import '/src/styls/bg-image.less';
+    @import '/src/styles/bg-image.less';
 
     // 引用全局设计变量
     @primary-blue: #6366f1;

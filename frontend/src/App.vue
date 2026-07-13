@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import MainNavbar from './components/layout/MainNavbar.vue'
   import '@/styles/初始化.css'
-  import { useCounterStore } from '@/stores/counter'
+  import { useUserStore } from '@/stores/user'
   import { onMounted, computed } from 'vue'
   import { useRoute } from 'vue-router'
   import OnlineStatus from '@/components/business/OnlineStatus.vue'
@@ -9,7 +9,7 @@
   import { get } from '@/api/request'
   import { saveUserInfo } from '@/utils/helpers'
 
-  const store = useCounterStore()
+  const store = useUserStore()
   const route = useRoute()
   const key = computed(() => route.path.startsWith('/musicPlayer') ? 'music-app-stable' : route.fullPath)
 

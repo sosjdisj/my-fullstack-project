@@ -39,5 +39,8 @@ const TreeholeSchema: Schema = new Schema({
     }
 });
 
+TreeholeSchema.index({ reviewStatus: 1, deleted: 1 });
+TreeholeSchema.index({ userId: 1 });
+
 const Treehole = mongoose.model<ITreehole>('treehole_messages', TreeholeSchema);
 export default Treehole;

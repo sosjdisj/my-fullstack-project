@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useCounterStore } from '@/stores/counter'
+import { useUserStore } from '@/stores/user'
 import { get, post } from '@/api/request'
 import type { DanmakusList } from '@/types/index'
 
@@ -15,7 +15,7 @@ export function useTreehole() {
 
   const allDanmus = ref<Danmu[]>([])
   const content = ref<string>()
-  const store = useCounterStore()
+  const store = useUserStore()
   let time: number | null
 
   const BATCH_SIZE = 30

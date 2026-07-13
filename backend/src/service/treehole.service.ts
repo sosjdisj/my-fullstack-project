@@ -2,7 +2,7 @@ import Treehole from '@/models/Treehole'
 import { prisma } from '@/config/db'
 
 export async function getMessage(limit: number) {
-    const filter = { deleted: { $ne: true }, reviewStatus: 'APPROVED' }
+    const filter = { deleted: { $ne: true }, reviewStatus: 'APPROVED' as const }
 
     const danmakus = await Treehole.find(filter)
         .sort({ createTime: -1 })  // 按时间倒序，最新的在前
@@ -40,7 +40,7 @@ export async function getMessage(limit: number) {
 
 // 检查用户是否发送太频繁
 export async function checkRecentMessage(userId: number): Promise<boolean> {
-    const query = { deleted: { $ne: true }, reviewStatus: 'APPROVED' };
+    const query = { deleted: { $ne: true }, reviewStatus: 'APPROVED' as const };
 
     const recentMessage = await Treehole.findOne({
         userId,

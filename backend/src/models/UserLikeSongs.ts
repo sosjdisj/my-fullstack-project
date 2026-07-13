@@ -23,5 +23,7 @@ const UserLikeSongsSchema: Schema = new Schema({
     }
 });
 
+UserLikeSongsSchema.index({ userId: 1, songId: 1 }, { unique: true });
+
 const UserLikeSongs = mongoose.model<IUserLikeSongs>('user_like_songs', UserLikeSongsSchema);
 export default UserLikeSongs;

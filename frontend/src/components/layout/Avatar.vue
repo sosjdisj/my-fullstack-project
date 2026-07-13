@@ -30,7 +30,7 @@
 <script setup lang="ts">
     import { Setting, SwitchButton } from '@element-plus/icons-vue'
     import { useRouter, useRoute } from 'vue-router'
-    import { useCounterStore } from '@/stores/counter'
+    import { useUserStore } from '@/stores/user'
     import { computed } from 'vue'
     import { clearUser } from '@/utils/helpers'
 
@@ -39,7 +39,7 @@
     }>()
     const router = useRouter()
     const route = useRoute()
-    const store = useCounterStore()
+    const store = useUserStore()
 
 
     const avatar = computed(() => store.avatar ? store.avatar : '')

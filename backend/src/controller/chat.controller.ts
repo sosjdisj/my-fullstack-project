@@ -3,6 +3,7 @@ import { getAuthenticatedUser, validateParams } from "@/utils/validateQueryParam
 import { chat, idSchema, cursorPaginationSchema } from '@/utils/validationSchemas'
 import { Request, Response } from 'express'
 import * as chatService from '@/service/chat.service'
+import { retrieveRelevantChunks, buildRagContext, buildRagPrompt, buildMultiTurnQuery } from '@/service/rag.service'
 import { AIMessage } from "@langchain/core/messages";
 
 
@@ -50,81 +51,6 @@ export async function startNewChat(req: Request, res: Response) {
     });
 }
 
-// /**
-//  * 发送单条消息并获取 AI 回复
-//  * @param req - Express 请求对象，包含消息内容和对话 ID
-//  * @param res - Express 响应对象
-//  * @returns 返回 AI 助手的回复消息
-//  */
-// export async function chatOnce(req: Request, res: Response) {
-//     const userInfo = getAuthenticatedUser(req, res)
-
-//     if (!userInfo) return;
-
-//     const bodyValidation = validateParams(req.body, res, chat)
-
-//     if (!bodyValidation.valid) return
-
-//     const paramsValidation = validateParams(req.params, res, idSchema)
-
-//     if (!paramsValidation.valid) return;
-
-//     const { content } = bodyValidation.data
-//     const { id } = paramsValidation.data
-
-//     // 1. 设置 SSE 响应头
-//     res.status(200); // 显式设置状态码
-//     res.setHeader('Content-Type', 'text/event-stream');
-//     res.setHeader('Cache-Control', 'no-cache');
-//     res.setHeader('Connection', 'keep-alive');
-
-//     const history = await chatService.getHistoryMessages(id)
-
-//     const agent = await getAgent();
-
-//     // 2. 调用 AI 并获取流 (假设你的 agent 支持 stream)
-//     const stream = await agent.stream(
-//         { messages: [...history, { role: "user", content }] },
-//         { streamMode: "messages" }
-//     );
-
-//     let fullAnswer = "";
-
-//     for await (const [token, _] of stream) {
-
-//         // 【修改点 2】：根据文档，内容在 token.content 中
-//         // 对于某些模型，可能需要访问 token.contentBlocks[0].text
-//         const text = token.content;
-
-//         if (text) {
-//             // 【注意】：在 streamMode: "messages" 模式下，token 通常是增量的 (delta)
-//             fullAnswer += text;
-
-//             // 推送给前端
-//             res.write(`data: ${JSON.stringify({ type: 'answer', content: fullAnswer })}\n\n`);
-//         }
-//     }
-
-//     // 4. AI 回复结束后逻辑
-//     if (history.length === 0) {
-//         const title = await chatService.generateAndSaveTitle(id, content);
-//         res.write(`data: ${JSON.stringify({ type: 'title', content: title })}\n\n`);
-//     }
-
-//     // 【修改点 3】：务必加上 await，否则主线程结束了数据库还没存完，可能会导致连接过早关闭
-
-//     await chatService.saveChatMessage(id, 'user', content)
-
-//     if (fullAnswer && fullAnswer.trim() !== "") {
-//         await chatService.saveChatMessage(id, 'assistant', fullAnswer);
-//     }
-
-//     await chatService.touchConversation(id)
-
-//     // 记得结束响应
-//     res.end();
-// }
-
 /**
  * 发送单条消息并获取 AI 回复
  * @param req - Express 请求对象，包含消息内容和对话 ID
@@ -155,11 +81,22 @@ export async function chatOnce(req: Request, res: Response) {
 
     const history = await chatService.getHistoryMessages(id)
 
+    // RAG 检索，失败时降级为普通对话
+    let enhancedContent = content
+    try {
+        const searchQuery = buildMultiTurnQuery(history, content, 3)
+        const ragResults = await retrieveRelevantChunks(searchQuery, 5, 20)
+        const ragContext = buildRagContext(ragResults)
+        enhancedContent = buildRagPrompt(content, ragContext)
+    } catch (error) {
+        console.error('[RAG] 检索失败，降级为普通对话:', error)
+    }
+
     const agent = await getAgent();
 
     // 2. 调用 AI 并获取流 (假设你的 agent 支持 stream)
     const stream = await agent.stream(
-        { messages: [...history, { role: "user", content }] },
+        { messages: [...history, { role: "user", content: enhancedContent }] },
         { streamMode: "messages" }
     );
 

@@ -15,7 +15,7 @@ interface SearchTitlesParams {
 export async function searchArticles({ keyword, page, size }: SearchArticlesParams) {
     const skip = (page - 1) * size
 
-    const query: any = { deleted: { $ne: true }, status: 'PUBLIC' }
+    const query: any = { deleted: { $ne: true }, status: 'PUBLIC' as const }
 
     if (keyword) {
         query.$or = [
@@ -43,10 +43,10 @@ export async function searchArticles({ keyword, page, size }: SearchArticlesPara
     const categoryIds = [...new Set(articles.map(a => a.category).filter(Boolean))]
 
     const [tags, categories] = await Promise.all([
-        Tags.find({ _id: { $in: tagIds }, deleted: { $ne: true }, status: 'ACTIVE' })
+        Tags.find({ _id: { $in: tagIds }, deleted: { $ne: true }, status: 'ACTIVE' as const })
             .select('_id name')
             .lean(),
-        Categories.find({ _id: { $in: categoryIds }, deleted: { $ne: true }, status: 'ACTIVE' })
+        Categories.find({ _id: { $in: categoryIds }, deleted: { $ne: true }, status: 'ACTIVE' as const })
             .select('_id name')
             .lean()
     ])
@@ -69,7 +69,7 @@ export async function searchArticles({ keyword, page, size }: SearchArticlesPara
 export async function getArticleTitles({ keyword }: SearchTitlesParams) {
     const query: any = {
         deleted: { $ne: true },
-        status: 'PUBLIC',
+        status: 'PUBLIC' as const,
         title: { $regex: keyword, $options: 'i' }
     }
 
@@ -85,7 +85,7 @@ export async function getArticleTitles({ keyword }: SearchTitlesParams) {
 export async function getHotSearchTitles() {
     const titles = await Article.find({
         deleted: { $ne: true },
-        status: 'PUBLIC'
+        status: 'PUBLIC' as const
     })
         .select('title')
         .limit(5)

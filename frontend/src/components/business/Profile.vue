@@ -36,7 +36,7 @@
 
 <script lang="ts" setup>
     import { ref, computed } from 'vue'
-    import { useCounterStore } from '@/stores/counter'
+    import { useUserStore } from '@/stores/user'
     import { Camera } from '@element-plus/icons-vue'
 
     const props = defineProps<{
@@ -55,7 +55,7 @@
     const fileInput = ref<HTMLInputElement | null>()
 
     // const avater = computed(() => store.avatar)
-    // const store = useCounterStore()
+    // const store = useUserStore()
 
     const handleImageSelect = (event: Event) => {
         const target = event.target as HTMLInputElement

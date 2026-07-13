@@ -1,6 +1,7 @@
 import Conversation from '@/models/Conversations'
 import Message from '@/models/Ai_Message'
 import { getAgent } from '@/service/agent.service';
+import mongoose from 'mongoose'
 
 /**
  * 获取指定对话的历史记录
@@ -33,22 +34,36 @@ export async function createConversation(userId: number) {
 }
 
 /**
- * 保存对话消息
- * 作用：同时存入数据库，并触发对话表的活跃时间更新
+ * 保存对话消息并更新会话活跃时间（事务保证原子性）
  */
 export async function saveChatMessage(
     conversationId: string,
     role: 'user' | 'assistant',
     content: string
 ) {
-    // 1. 创建消息记录
-    const message = await Message.create({
-        conversationId: conversationId,
-        role,
-        content
-    });
+    const session = await mongoose.startSession()
+    try {
+        session.startTransaction()
+        const [message] = await Message.create([{
+            conversationId,
+            role,
+            content
+        }], { session })
 
-    return message;
+        await Conversation.findByIdAndUpdate(
+            conversationId,
+            { $set: { updatedAt: new Date() } },
+            { session }
+        )
+
+        await session.commitTransaction()
+        return message
+    } catch (err) {
+        await session.abortTransaction()
+        throw err
+    } finally {
+        session.endSession()
+    }
 }
 
 /**

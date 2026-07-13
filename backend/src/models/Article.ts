@@ -90,6 +90,10 @@ const ArticleSchema: Schema = new Schema({
     }
 });
 
+ArticleSchema.index({ status: 1, deleted: 1 });
+ArticleSchema.index({ category: 1 });
+ArticleSchema.index({ tag: 1 });
+
 // 创建并导出 Model
 const Article = mongoose.model<IArticle>('Article', ArticleSchema);
 export default Article;

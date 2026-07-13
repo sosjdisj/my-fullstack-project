@@ -1,8 +1,8 @@
 <template>
     <div class="form-container">
         <div class="input-wrapper" :class="{ 'shake-animation': codeerrorMsg }">
-            <input type="text" :placeholder="props.placeholder" class="custom-input" v-model="codeUpdate"
-                @blur="checkPassword(props.updata)" @keydown.enter="handleEnterKey" :class="{
+            <input :type="props.type ?? 'text'" :placeholder="props.placeholder" class="custom-input"
+                v-model="codeUpdate" @blur="checkPassword(props.updata)" @keydown.enter="handleEnterKey" :class="{
                     'is-error': codeerrorMsg,
                     'is-success': !codeerrorMsg && innerValue && innerValue.length > 0
                 }" :autocomplete="props.updata">
@@ -25,6 +25,7 @@
     const emit = defineEmits(['update-form-field', 'handCheck'])
 
     const props = defineProps<{
+        type?: string
         errors: LoginResult
         updata: FormField
         placeholder: string

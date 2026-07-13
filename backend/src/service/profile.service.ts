@@ -27,7 +27,7 @@ export async function getArticlesCollectedId(userId: number, skip: number, size:
     const categoryIds = [...new Set(articles.map(a => a.category).filter(Boolean))];
     const tagIds = [...new Set(articles.map(a => a.tag).filter(Boolean))];
 
-    const activeQuery = { deleted: { $ne: true }, status: 'ACTIVE' }
+    const activeQuery = { deleted: { $ne: true }, status: 'ACTIVE' as const }
 
     const [categorys, tags] = await Promise.all([
         Categories.find({ _id: { $in: categoryIds }, ...activeQuery })
@@ -146,7 +146,7 @@ export async function getKeywordArticles(userId: number, skip: number, size: num
 
     const categoryIds = [...new Set(articles.map(a => a.category).filter(Boolean))];
 
-    const activeQuery = { deleted: { $ne: true }, status: 'ACTIVE' }
+    const activeQuery = { deleted: { $ne: true }, status: 'ACTIVE' as const }
 
     const categorys = await Categories.find({ _id: { $in: categoryIds }, ...activeQuery })
         .select('_id name')

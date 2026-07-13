@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
-import { useCounterStore } from '@/stores/counter'
+import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 
 const routes = [

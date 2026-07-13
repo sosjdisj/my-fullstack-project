@@ -2,7 +2,7 @@ import Article from "@/models/Article"
 
 export async function getTimelineList(page: number, size: number) {
     const skip = (page - 1) * size
-    const filter = { deleted: { $ne: true }, status: 'PUBLIC' }
+    const filter = { deleted: { $ne: true }, status: 'PUBLIC' as const }
 
     const articles = await Article.find(filter)
         .sort({ createdAt: -1 })

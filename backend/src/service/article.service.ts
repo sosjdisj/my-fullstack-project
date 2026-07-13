@@ -4,12 +4,13 @@ import Comments from '@/models/Comments'
 import Categories from '@/models/Categories'
 import Tags from '@/models/Tags'
 import { prisma } from '@/config/db'
+import mongoose from 'mongoose'
 
 // 获取文章列表（分页）
 export async function getArticleList(page: number, size: number) {
     const skip = (page - 1) * size
-    const query = { deleted: { $ne: true }, status: 'PUBLIC' };
-    const activeQuery = { deleted: { $ne: true }, status: 'ACTIVE' }
+    const query = { deleted: { $ne: true }, status: 'PUBLIC' as const };
+    const activeQuery = { deleted: { $ne: true }, status: 'ACTIVE' as const }
 
     const articles = await Article.find(query).skip(skip).limit(size)
         .select('_id title published tag category content cover').lean()
@@ -45,9 +46,9 @@ export async function getArticleList(page: number, size: number) {
 
 // 获取文章详情
 export async function getArticleById(id: string, userId?: number) {
-    const activeQuery = { deleted: { $ne: true }, status: 'ACTIVE' };
-    const publicActiveFilter = { deleted: { $ne: true }, status: 'PUBLIC' };
-    const commentsQuery = { deleted: { $ne: true }, reviewStatus: 'APPROVED' }
+    const activeQuery = { deleted: { $ne: true }, status: 'ACTIVE' as const };
+    const publicActiveFilter = { deleted: { $ne: true }, status: 'PUBLIC' as const };
+    const commentsQuery = { deleted: { $ne: true }, reviewStatus: 'APPROVED' as const }
     let isLiked = false
     let isCollected = false
 
@@ -93,7 +94,7 @@ export async function getArticleById(id: string, userId?: number) {
         const [author, category, tag] = await Promise.all([
             prisma.user.findFirst({
                 where: {
-                    user_id: article.author,
+                    user_id: articleData.author,
                     deleted: 0
                 },
                 select: { user_id: true, username: true, cover: true }
@@ -119,8 +120,8 @@ export async function getArticleById(id: string, userId?: number) {
 
 // 获取随机3篇文章
 export async function getRandomArticles() {
-    const query = { deleted: { $ne: true }, status: 'PUBLIC' };
-    const activeQuery = { deleted: { $ne: true }, status: 'ACTIVE' };
+    const query = { deleted: { $ne: true }, status: 'PUBLIC' as const };
+    const activeQuery = { deleted: { $ne: true }, status: 'ACTIVE' as const };
 
     const articles = await Article.aggregate([
         { $match: query },
@@ -168,88 +169,119 @@ export async function getArticleCollectStatus(articleId: string, userId: number)
 
 // 点赞文章
 export async function likeArticle(articleId: string, userId: number) {
-    await Promise.all([
-        Article.updateOne(
-            { _id: articleId },
-            {
-                $inc: { likes: 1 }
-            }
-        ),
-        UserArticleInteraction.updateOne(
-            { articleId, userId },
-            { isLiked: true },
-            { upsert: true }
-        ),
-    ])
-
-    const interactionCount = await UserArticleInteraction.countDocuments({ articleId, isLiked: true })
-
-    return interactionCount
+    const session = await mongoose.startSession()
+    try {
+        session.startTransaction()
+        await Promise.all([
+            Article.findOneAndUpdate(
+                { _id: articleId },
+                { $inc: { likes: 1 } },
+                { select: 'likes', returnDocument: 'after', session }
+            ),
+            UserArticleInteraction.updateOne(
+                { articleId, userId },
+                { isLiked: true },
+                { upsert: true, session }
+            ),
+        ])
+        const interactionCount = await UserArticleInteraction.countDocuments({ articleId, isLiked: true }).session(session)
+        await session.commitTransaction()
+        return interactionCount
+    } catch (err) {
+        await session.abortTransaction()
+        throw err
+    } finally {
+        session.endSession()
+    }
 }
 
 // 取消点赞
 export async function unlikeArticle(articleId: string, userId: number) {
-    await Promise.all([
-        Article.updateOne(
-            { _id: articleId, likes: { $gt: 0 } },
-            {
-                $inc: { likes: -1 }
-            }
-        ),
-        UserArticleInteraction.updateOne(
-            { articleId, userId },
-            { isLiked: false }
-        ),
-    ])
-
-    const interactionCount = await UserArticleInteraction.countDocuments({ articleId, isLiked: true })
-
-    return interactionCount
+    const session = await mongoose.startSession()
+    try {
+        session.startTransaction()
+        await Promise.all([
+            Article.findOneAndUpdate(
+                { _id: articleId, likes: { $gt: 0 } },
+                { $inc: { likes: -1 } },
+                { select: 'likes', returnDocument: 'after', session }
+            ),
+            UserArticleInteraction.updateOne(
+                { articleId, userId },
+                { isLiked: false },
+                { session }
+            ),
+        ])
+        const interactionCount = await UserArticleInteraction.countDocuments({ articleId, isLiked: true }).session(session)
+        await session.commitTransaction()
+        return interactionCount
+    } catch (err) {
+        await session.abortTransaction()
+        throw err
+    } finally {
+        session.endSession()
+    }
 }
 
 // 收藏文章
 export async function collectArticle(articleId: string, userId: number) {
-    await Promise.all([
-        Article.updateOne(
-            { _id: articleId },
-            {
-                $inc: { collects: 1 }
-            }
-        ),
-        UserArticleInteraction.updateOne(
-            { articleId, userId },
-            { isCollected: true },
-            { upsert: true }
-        ),
-    ])
-    const interactionCount = await UserArticleInteraction.countDocuments({ articleId, isCollected: true })
-
-    return interactionCount
+    const session = await mongoose.startSession()
+    try {
+        session.startTransaction()
+        await Promise.all([
+            Article.findOneAndUpdate(
+                { _id: articleId },
+                { $inc: { collects: 1 } },
+                { select: 'collects', returnDocument: 'after', session }
+            ),
+            UserArticleInteraction.updateOne(
+                { articleId, userId },
+                { isCollected: true },
+                { upsert: true, session }
+            ),
+        ])
+        const interactionCount = await UserArticleInteraction.countDocuments({ articleId, isCollected: true }).session(session)
+        await session.commitTransaction()
+        return interactionCount
+    } catch (err) {
+        await session.abortTransaction()
+        throw err
+    } finally {
+        session.endSession()
+    }
 }
 
 // 取消收藏
 export async function uncollectArticle(articleId: string, userId: number) {
-    await Promise.all([
-        Article.updateOne(
-            { _id: articleId, collects: { $gt: 0 } },
-            {
-                $inc: { collects: -1 }
-            }
-        ),
-        UserArticleInteraction.updateOne(
-            { articleId, userId },
-            { isCollected: false }
-        ),
-    ])
-
-    const interactionCount = await UserArticleInteraction.countDocuments({ articleId, isCollected: true })
-
-    return interactionCount
+    const session = await mongoose.startSession()
+    try {
+        session.startTransaction()
+        await Promise.all([
+            Article.findOneAndUpdate(
+                { _id: articleId, collects: { $gt: 0 } },
+                { $inc: { collects: -1 } },
+                { select: 'collects', returnDocument: 'after', session }
+            ),
+            UserArticleInteraction.updateOne(
+                { articleId, userId },
+                { isCollected: false },
+                { session }
+            ),
+        ])
+        const interactionCount = await UserArticleInteraction.countDocuments({ articleId, isCollected: true }).session(session)
+        await session.commitTransaction()
+        return interactionCount
+    } catch (err) {
+        await session.abortTransaction()
+        throw err
+    } finally {
+        session.endSession()
+    }
 }
 
 export async function getArticleComments(articleId: string, page: number, size: number) {
     const skip = (page - 1) * size
-    const query = { deleted: { $ne: true }, reviewStatus: 'APPROVED' };
+    const query = { deleted: { $ne: true }, reviewStatus: 'APPROVED' as const };
 
     const comments = await Comments.find({ articleId, ...query })
         .select('_id userId content createTime')

@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { gsap } from 'gsap'
-import { useCounterStore } from '@/stores/counter'
+import { useUserStore } from '@/stores/user'
 import type { Article } from '@/types/index'
 import { usePaginationCache } from '@/utils/helpers'
 import { usePageControl } from '@/composables/usePageControl'
@@ -24,7 +24,7 @@ export function useHome() {
     gsap.registerPlugin(ScrollTrigger)
     let observer = ref<IntersectionObserver | null>(null)
     const homediv = ref<HTMLElement | null>(null)
-    const store = useCounterStore()
+    const store = useUserStore()
 
     const { page, nextPage } = usePageControl()
 

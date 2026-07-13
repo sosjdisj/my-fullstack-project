@@ -28,6 +28,8 @@ const UserArticleInteractionSchema: Schema = new Schema({
     }
 });
 
+UserArticleInteractionSchema.index({ userId: 1, articleId: 1 }, { unique: true });
+
 const UserArticleInteraction = mongoose.model<IUserArticleInteraction>('user_article_interactions', UserArticleInteractionSchema);
 export default UserArticleInteraction;
 
