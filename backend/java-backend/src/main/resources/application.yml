@@ -11,7 +11,7 @@ spring:
   # MongoDB 配置
   data:
     mongodb:
-      uri: mongodb://localhost:27017/myblog
+      uri: ${MONGODB_URI:mongodb://localhost:27017/myblog}
       auto-index-creation: true
 
     # Redis 配置
