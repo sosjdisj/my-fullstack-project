@@ -100,11 +100,6 @@
       ]
     },
     {
-      name: '相册',
-      path: '/gallery',
-      id: '相册'
-    },
-    {
       name: '音乐',
       path: '/musicPlayer',
       id: '音乐'

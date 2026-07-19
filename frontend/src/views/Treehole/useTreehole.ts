@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, type ComponentPublicInstance, type VNodeRef } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { get, post } from '@/api/request'
@@ -10,8 +10,18 @@ interface Danmu {
   avatar: string
 }
 
+type DanmakuComponent = ComponentPublicInstance & {
+  play(): void
+  pause(): void
+  stop(): void
+  addDanmu(data: Danmu): void
+  clear(): void
+}
+
 export function useTreehole() {
   const isShow = ref(false)
+
+  const danmakuRef = ref<DanmakuComponent | null>(null)
 
   const allDanmus = ref<Danmu[]>([])
   const content = ref<string>()
@@ -44,8 +54,9 @@ export function useTreehole() {
     const result = await get('/treehole', { limit: BATCH_SIZE })
 
     if (result.success) {
-      const { list } = result.data.data
-      pendingDanmakus = [...pendingDanmakus, ...list]
+
+      const { data } = result.data
+      pendingDanmakus = [...pendingDanmakus, ...data]
     }
   }
 
@@ -66,24 +77,37 @@ export function useTreehole() {
       color: '#fff',
       avatar: pendingDanmakus[randomIndex]?.avatar || ''
     }
-    allDanmus.value.push(newDanmaku)
+
+    // 使用 addDanmu 方法添加弹幕
+    danmakuRef.value?.addDanmu(newDanmaku)
+
     pendingDanmakus.splice(randomIndex, 1)
   }
 
-  const initTreehole = () => {
-    fetchNewDanmakus()  // 初始加载
-    time = setInterval(shootDanmaku, 1000)
+  const initTreehole = async () => {
+    await fetchNewDanmakus()  // 先加载数据
+    // 等待组件渲染后开始发射弹幕
+    setTimeout(() => {
+      time = setInterval(shootDanmaku, 1000)
+    }, 500)
   }
+
   const clearIntervalTimer = () => {
     if (time) {
       clearInterval(time)
     }
   }
 
+  const setDanmakuRef = (el: any) => {
+    danmakuRef.value = el
+  }
+
   return {
     isShow,
     allDanmus,
     content,
+    setDanmakuRef,
+    danmakuRef,
     handleFocus,
     handleTreehole,
     initTreehole,

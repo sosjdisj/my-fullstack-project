@@ -1,19 +1,24 @@
 <template>
   <div :ref="el => setLoadMoreContainerRefWrapper(el as HTMLElement)" class="load-more-container">
-    <LoadMore v-show="!isFinished" />
+    <LoadMore v-show="showLoading" />
     <p class="bottom-p" v-show="isFinished">~~到达底部咯~~</p>
   </div>
 </template>
 
 <script setup lang="ts">
-  import { onUnmounted } from 'vue'
+  import { computed, onUnmounted } from 'vue'
   import { setLoadMoreContainerRef } from '@/utils/helpers'
   import LoadMore from '@/components/ui/LoadMore.vue'
 
   const props = defineProps<{
     loadMore: () => Promise<void>
     isFinished: boolean
+    isLoading?: boolean
   }>()
+
+  const showLoading = computed(() =>
+    props.isLoading !== undefined ? props.isLoading : !props.isFinished
+  )
 
   let clearLoadMoreObserver: (() => void) | null = null
 

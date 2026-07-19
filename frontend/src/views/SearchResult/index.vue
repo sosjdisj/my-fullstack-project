@@ -13,7 +13,7 @@
 
             <div class="results-list">
                 <div v-for="(article, index) in articles" :key="index" class="article-glass-card"
-                    @click="handArticleDetail(article._id)">
+                    @click="handArticleDetail(article.id)">
                     <div class="card-content">
                         <div v-if="article.cover" class="article-cover">
                             <img :src="article.cover" :alt="article.title" />

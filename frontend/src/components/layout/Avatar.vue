@@ -33,6 +33,7 @@
     import { useUserStore } from '@/stores/user'
     import { computed } from 'vue'
     import { clearUser } from '@/utils/helpers'
+    import { post } from '@/api/request'
 
     const props = defineProps<{
         picture: boolean
@@ -48,10 +49,10 @@
     }
 
     const handLogout = async () => {
+        await post('/auth/logout')
         if (route.path === '/setting') {
             router.push('/home')
         }
-        // await post('/logout')
         clearUser()
     }
 </script>

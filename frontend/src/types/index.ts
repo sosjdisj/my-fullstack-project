@@ -21,7 +21,7 @@ export interface Mark {
 }
 
 export interface Article {
-    _id: string;
+    id: string;
     cover: string;
     title: string;
     pageViews: number;
@@ -42,10 +42,8 @@ export interface Article {
 }
 
 export interface ArticleNeighbor {
-    _id: string,
+    id: string,
     title: string,
-    cover: string,
-    published: string
 }
 
 export interface ArticleComment {
@@ -79,7 +77,7 @@ export interface TabCategoryItem {
 }
 
 export interface collectedArticles {
-    _id: string,
+    id: string,
     cover: string
     title: string
     category: string
@@ -89,7 +87,7 @@ export interface collectedArticles {
 }
 
 export interface ArticleCard {
-    _id: string
+    id: string
     cover: string
     title: string
     category: string
@@ -108,7 +106,7 @@ export interface AiChat {
 }
 
 export interface Conversations {
-    _id: string,
+    id: string,
     title: string,
     createdAt: string
 }

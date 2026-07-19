@@ -37,9 +37,9 @@
 
             <div class="history-list" v-if="!isCollapsed">
                 <div class="section-divider">最近对话</div>
-                <div v-for="item in conversations" :key="item._id"
-                    :class="['history-item', { active: conversationId === item._id }]"
-                    @click="selectConversation(item._id)">
+                <div v-for="item in conversations" :key="item.id"
+                    :class="['history-item', { active: conversationId === item.id }]"
+                    @click="selectConversation(item.id)">
                     <el-icon class="msg-icon">
                         <ChatLineRound />
                     </el-icon>

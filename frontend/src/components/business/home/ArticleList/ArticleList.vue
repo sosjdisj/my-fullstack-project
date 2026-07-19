@@ -33,7 +33,7 @@
 <script lang="ts" setup>
     import type { Article } from '@/types/index'
     import { useRouter } from 'vue-router';
-    import { ref, watch, nextTick } from 'vue'
+    import { ref, watch, nextTick, onMounted } from 'vue'
     import { ScrollTrigger } from 'gsap/ScrollTrigger'
     import { gsap } from 'gsap'
     import { formatDate } from '@/utils/helpers'
@@ -46,9 +46,9 @@
     const router = useRouter()
     const handTo = (item: Article) => {
         router.push({
-            path: `/articleDetail/${item._id}`,
+            path: `/articleDetail/${item.id}`,
             query: {
-                id: item._id
+                id: item.id
             }
         })
     }

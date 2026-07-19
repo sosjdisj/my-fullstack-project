@@ -1,0 +1,84 @@
+server:
+  port: 3001
+
+spring:
+  application:
+    name: blog-backend
+  mvc:
+    async:
+      request-timeout: 180000  # 设置为 60 秒（单位毫秒）
+
+  # MongoDB 配置
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/myblog
+      auto-index-creation: true
+
+    # Redis 配置
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      timeout: 5000ms
+
+  # MySQL 配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/myblog?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+  # Jackson 配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+# JWT 配置
+jwt:
+  secret: ${JWT_SECRET:}
+  access-token-expiration: 7200000    # 2小时（毫秒）
+  refresh-token-expiration: 604800000  # 7天（毫秒）
+
+# CORS 配置
+cors:
+  allowed-origins: http://localhost:5173,http://localhost:5175
+
+# 文件上传路径
+upload:
+  dir: D:/图片
+  base-url: http://localhost:3001
+
+# 阿里云短信配置
+aliyun:
+  sms:
+    access-key-id: ${ALIYUN_ACCESS_KEY_ID:}
+    access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET:}
+    sign-name: 个人博客验证码
+    template-code: SMS_332535108
+
+# Python AI 服务配置
+ai-service:
+  url: http://localhost:8000
+
+# Socket.IO 配置
+socketio:
+  port: 3002

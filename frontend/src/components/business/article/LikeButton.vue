@@ -51,6 +51,7 @@
     import type { Article, ArticleNeighbor } from '@/types/index'
     import { Delete, post } from '@/api/request'
     import { ElMessage } from 'element-plus'
+    import { useUserStore } from '@/stores/user'
 
     const route = useRoute()
     const isCollected = ref(false)
@@ -64,6 +65,7 @@
         next?: ArticleNeighbor,
     }>()
     const emit = defineEmits(['updateLike', 'updateCollects'])
+    const userStore = useUserStore()
 
     // 使用计算属性，确保始终从 props 获取最新值
     const likes = computed(() => props.articleData.likes)
@@ -86,8 +88,18 @@
         }
         return;
     })
-    const handtoggleLike = async () => {
 
+    const checkLoginStatus = () => {
+        if (!userStore.username) {
+            ElMessage.error('请先登录')
+            return false
+        }
+
+        return true
+    }
+
+    const handtoggleLike = async () => {
+        if (!checkLoginStatus()) return
         if (!isPostLike.value) return ElMessage.warning('点太快啦，给系统一点反应时间哦～')
 
         try {
@@ -98,12 +110,13 @@
 
             // 根据状态调用不同方法
             const apiCall = isCurrentlyLiked
-                ? Delete(`${interactionEndpoints.like}/${props.articleData._id}`)
-                : post(interactionEndpoints.like, { id: props.articleData._id })
+                ? Delete(`${interactionEndpoints.like}/${props.articleData.id}`)
+                : post(interactionEndpoints.like, { id: props.articleData.id })
 
             const result = await apiCall
 
             if (result.success) {
+   
                 const { updatedLikes, status } = result.data.data
                 const newIsLiked = !isCurrentlyLiked
                 isLiked.value = newIsLiked
@@ -120,7 +133,7 @@
         }
     }
     const handtoggleCollect = async () => {
-
+        if (!checkLoginStatus()) return
         if (!isPostCollects.value) return ElMessage.warning('点太快啦，给系统一点反应时间哦～')
 
         try {
@@ -131,8 +144,8 @@
 
             // 根据状态调用不同方法
             const apiCall = isCurrentlyCollects
-                ? Delete(`${interactionEndpoints.collects}/${props.articleData._id}`)
-                : post(interactionEndpoints.collects, { id: props.articleData._id })
+                ? Delete(`${interactionEndpoints.collects}/${props.articleData.id}`)
+                : post(interactionEndpoints.collects, { id: props.articleData.id })
 
             const result = await apiCall
 
@@ -160,22 +173,22 @@
     }
     const handLeft = () => {
 
-        if (props.next?._id) {
+        if (props.next?.id) {
             router.push({
-                path: `/articleDetail/${props.next._id}`,
+                path: `/articleDetail/${props.next.id}`,
                 query: {
-                    id: String(props.next._id)
+                    id: String(props.next.id)
                 }
             })
         }
     }
     const handRigth = () => {
 
-        if (props.prev?._id) {
+        if (props.prev?.id) {
             router.push({
-                path: `/articleDetail/${props.prev._id}`,
+                path: `/articleDetail/${props.prev.id}`,
                 query: {
-                    id: String(props.prev._id)
+                    id: String(props.prev.id)
                 }
             })
         }

@@ -4,7 +4,7 @@ import { gsap } from 'gsap'
 import { useRoute, useRouter } from 'vue-router'
 import { get } from '@/api/request'
 import type { TimelineList } from '@/types/index'
-import { setLoadMoreContainerRef } from '@/utils/helpers'
+import { setLoadMoreContainerRef, autoLoadIfNotFillScreen } from '@/utils/helpers'
 import { usePageControl } from '@/composables/usePageControl'
 
 export function useTimeline() {
@@ -48,6 +48,7 @@ export function useTimeline() {
 
       if (list.length === 0) {
         isFinished.value = true
+        isLoading.value = false
         return;
       }
 
@@ -65,6 +66,8 @@ export function useTimeline() {
 
     initTimelineScrollAnimations()
     isLoading.value = false
+
+    await autoLoadIfNotFillScreen(initTimeline, isFinished.value)
 
   }
 

@@ -3,7 +3,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { gsap } from 'gsap'
 import { useUserStore } from '@/stores/user'
 import type { Article } from '@/types/index'
-import { usePaginationCache } from '@/utils/helpers'
+import { usePaginationCache, autoLoadIfNotFillScreen } from '@/utils/helpers'
 import { usePageControl } from '@/composables/usePageControl'
 import { initHomeRightScrollAnimations, setLoadMoreContainerRef, handleScroll } from '@/utils/helpers'
 import { CACHE_KEYS } from '@/constants/cacheKeys';
@@ -71,12 +71,15 @@ export function useHome() {
 
         if (articleListData.list.length === 0) {
             isFinished.value = true
+            isLoading.value = false
             return;
         }
         articleList.value = [...articleList.value, ...articleListData.list]
         nextPage()
 
         isLoading.value = false
+
+        await autoLoadIfNotFillScreen(loadMore, isFinished.value)
     }
 
     const initHomePage = async () => {

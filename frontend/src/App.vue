@@ -2,18 +2,31 @@
   import MainNavbar from './components/layout/MainNavbar.vue'
   import '@/styles/初始化.css'
   import { useUserStore } from '@/stores/user'
-  import { onMounted, computed } from 'vue'
-  import { useRoute } from 'vue-router'
+  import { onMounted, onUnmounted, computed } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
   import OnlineStatus from '@/components/business/OnlineStatus.vue'
   import CollapseButton from '@/components/ui/CollapseButton.vue'
   import { get } from '@/api/request'
-  import { saveUserInfo } from '@/utils/helpers'
+  import { saveUserInfo, clearUser } from '@/utils/helpers'
 
   const store = useUserStore()
   const route = useRoute()
+  const router = useRouter()
   const key = computed(() => route.path.startsWith('/musicPlayer') ? 'music-app-stable' : route.fullPath)
 
+  // 多Tab登出同步：监听其他Tab清除token
+  const handleStorageChange = (e: StorageEvent) => {
+    if (e.key === 'token' && e.newValue === null && e.oldValue !== null) {
+      clearUser()
+      if (route.path !== '/login') {
+        router.push('/home')
+      }
+    }
+  }
+
   onMounted(async () => {
+    window.addEventListener('storage', handleStorageChange)
+
     const token = localStorage.getItem('token')
 
     if (token) {
@@ -24,7 +37,7 @@
           saveUserInfo(store, {
             username: userInfo.username,
             avatar: userInfo.avatar,
-            signature: userInfo.signature
+            signature: userInfo.signature,
           })
         }
       } catch (error) {
@@ -32,6 +45,10 @@
         store.token = null
       }
     }
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('storage', handleStorageChange)
   })
 </script>
 

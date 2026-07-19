@@ -3,7 +3,7 @@
     <div class="category">
 
         <div class="bg-image">
-            <img src="/src/assets/【哲风壁纸】6K-6K画质.png" alt="">
+            <img src="/src/assets/18390764516330880.jpg" alt="">
         </div>
 
         <div class="category-container">

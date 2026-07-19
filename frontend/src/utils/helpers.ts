@@ -1,3 +1,4 @@
+import { nextTick } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useUserStore } from '@/stores/user'
@@ -63,11 +64,18 @@ export async function usePaginationCache<T extends Record<string, any>>(
 }
 
 export function setLoadMoreContainerRef(el: Element, fn: Function): (() => void) | null {
+    const tryLoad = async () => {
+        await Promise.resolve(fn())
+        await nextTick()
+        if (isLoadMoreSentinelVisible()) {
+            await fn()
+        }
+    }
 
     const observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                fn()
+                tryLoad()
             }
         })
     }, { threshold: 0.1 })
@@ -75,6 +83,27 @@ export function setLoadMoreContainerRef(el: Element, fn: Function): (() => void)
     return () => {
         observer.unobserve(el);
         observer.disconnect();
+    }
+}
+
+function isLoadMoreSentinelVisible(sentinelSelector = '.load-more-container') {
+    const sentinel = document.querySelector(sentinelSelector)
+    if (sentinel) {
+        const rect = sentinel.getBoundingClientRect()
+        return rect.top < window.innerHeight && rect.bottom > 0
+    }
+    return document.documentElement.scrollHeight <= document.documentElement.clientHeight
+}
+
+/**
+ * 内容不足一屏时自动触发下一页加载，解决 IntersectionObserver 无法触发的问题
+ * @param loadFn 加载函数（内部应有 isLoading/isFinished 守卫）
+ * @param finished 当前是否已全部加载完
+ */
+export async function autoLoadIfNotFillScreen(loadFn: () => Promise<void>, finished: boolean) {
+    await nextTick()
+    if (!finished && isLoadMoreSentinelVisible()) {
+        await loadFn()
     }
 }
 

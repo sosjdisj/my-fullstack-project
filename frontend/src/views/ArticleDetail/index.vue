@@ -18,7 +18,7 @@
             <LikeButton @update-like="handleUpdateDataLike" @update-collects="handleUpdateDataFavorites"
                 v-if="isDataReady" :articleData="articleData" :prev :next />
 
-            <Remark :comments="articleData.comments" :id="articleData._id" ref="remarkComponentRef" />
+            <Remark :comments="articleData.comments" :id="articleData.id" ref="remarkComponentRef" />
 
             <CommentCard v-for="item in comments" :data="item" />
 

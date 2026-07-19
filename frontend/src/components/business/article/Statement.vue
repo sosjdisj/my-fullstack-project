@@ -27,7 +27,6 @@
 </template>
 
 <script setup lang="ts">
-    import type { Article } from '@/types/index'
 
     const props = defineProps<{
         author: string

@@ -3,6 +3,7 @@ import { get, getModifiedFields, patch } from '@/api/request';
 import { ElMessage } from 'element-plus'
 import type { Mark } from '@/types/index'
 import { buildArticleFormData, deepEqual, isFormDataComplete } from '@/utils/helpers';
+import { useUserStore } from '@/stores/user'
 
 
 export function useSetting() {
@@ -16,6 +17,8 @@ export function useSetting() {
     })
     const checkForChanges = ref({ ...userData.value })
     const coverFile = ref<File | null>(null)
+
+    const store = useUserStore()
 
     const isSubmitting = ref(false);
 
@@ -47,6 +50,8 @@ export function useSetting() {
             ElMessage.success(result.message)
             // 更新检查变更的基准数据
             checkForChanges.value = { ...userData.value };
+            store.username = userData.value.username
+            store.avatar = userData.value.cover
         }
     }
 

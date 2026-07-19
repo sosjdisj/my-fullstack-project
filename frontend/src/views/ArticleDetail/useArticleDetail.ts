@@ -24,7 +24,7 @@ export function useArticleDetail(remarkComponentRef: Ref<InstanceType<typeof Rem
     })
 
     const articleData = ref<Article>({
-        _id: '',
+        id: '',
         cover: '',
         title: '',
         pageViews: 0,
@@ -71,12 +71,13 @@ export function useArticleDetail(remarkComponentRef: Ref<InstanceType<typeof Rem
             queryData.value.id,
             `${ARTICLE_DATA_KEY}/${queryData.value.id}`
         )
+        console.log(articleDataCache)
+        if (!articleDataCache) return;
 
-        if (!articleDataCache.detail) return;
-
-        articleData.value = articleDataCache.detail
+        articleData.value = articleDataCache
         prev.value = articleDataCache.prev
         next.value = articleDataCache.next
+
 
         setTimeout(() => {
             isDataReady.value = true
@@ -90,11 +91,10 @@ export function useArticleDetail(remarkComponentRef: Ref<InstanceType<typeof Rem
         try {
             const commentsListData = await usePaginationCache(
                 CACHE_KEYS.COMMENTS_KEY,
-                page.value,
+                `${queryData.value.id}_${page.value}`,
                 `${ARTICLE_DATA_KEY}/${queryData.value.id}/comments`,
                 { page: page.value }
             )
-
             if (commentsListData.list.length === 0) {
                 isFinished.value = true
                 return;

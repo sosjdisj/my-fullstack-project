@@ -77,9 +77,13 @@
     });
 
     const handleBlur = () => {
-        // 如果输入框没内容，失焦自动关闭
-        if (inputRef.value && !inputRef.value.value) {
-        }
+        // 延迟判断，避免点击历史/热搜时 blur 先于 click 导致面板提前关闭
+        setTimeout(() => {
+            if (!props.active || document.activeElement === inputRef.value) return
+            if (!keyword.value.trim()) {
+                emit('close')
+            }
+        }, 150)
     };
     const handleSearch = async () => {
         const searchText = keyword.value.trim();
@@ -131,7 +135,8 @@
             const result = await get('/search/titles', { keyword: keyword.value })
 
             if (result.success) {
-                searchResults.value = result.data.data.list
+                console.log(result)
+                searchResults.value = result.data.data
             }
         } else {
             searchResults.value = []
@@ -145,7 +150,7 @@
         if (newValue) {
             const result = await get('/search/hot-titles')
             if (result.success) {
-                hotTitles.value = result.data.data.list
+                hotTitles.value = result.data.data
             }
         }
     })

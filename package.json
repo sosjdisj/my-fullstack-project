@@ -3,21 +3,25 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "backend",
     "frontend"
   ],
   "scripts": {
-    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev -w backend\" \"npm run dev -w frontend\"",
-    "build": "npm run build -w backend && npm run build -w frontend",
+    "dev": "concurrently -n frontend,java,python -c green,blue,yellow \"npm:dev:frontend\" \"npm:dev:java\" \"npm:dev:python\"",
+    "dev:frontend": "npm run dev -w frontend",
+    "dev:java": "cd \"backend/java-backend\" && .\\mvnw.cmd spring-boot:run",
+    "dev:python": "cd \"backend/ai-service\" && cross-env HF_ENDPOINT=https://hf-mirror.com .\\venv\\Scripts\\python.exe main.py",
+    "build": "npm run build -w frontend",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
     "@qdrant/js-client-rest": "^1.18.0",
-    "ioredis": "^5.11.1"
+    "ioredis": "^5.11.1",
+    "vue-danmaku": "^2.0.5"
   }
 }

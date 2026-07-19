@@ -19,7 +19,7 @@ t'sts<template>
                     </div>
                 </div>
 
-                <div v-for="item in articleList" :key="item._id" class="ArticleItem">
+                <div v-for="item in articleList" :key="item.id" class="ArticleItem">
                     <div class="ArticleCover">
                         <img v-lazy="item.cover" alt="cover">
                     </div>
@@ -29,7 +29,7 @@ t'sts<template>
                             {{ item.content }}
                         </p>
                         <div class="meta">
-                            <span class="time">{{ item.published }}</span>
+                            <span class="time">{{ formatDate(item.published) }}</span>
                             <span class="tags"># {{ item[categoryTab] }}</span>
                         </div>
                     </div>
@@ -49,6 +49,7 @@ t'sts<template>
     import { useArticleListByCategory } from './useArticleListByCategory'
     import { Collection } from '@element-plus/icons-vue';
     import InfiniteScrollContainer from '@/components/business/InfiniteScrollContainer.vue';
+import { formatDate } from '@/utils/helpers';
 
     const { queryData, articleList, categoryTab, isFinished, fetchArticleCategoryTagList } = useArticleListByCategory()
 

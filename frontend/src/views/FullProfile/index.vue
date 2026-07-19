@@ -19,11 +19,19 @@
                     <h1 class="page-title">我的收藏</h1>
                     <form class="filter-tools" @submit.prevent="handleSearch">
                         <input v-model="keyword" type="text" placeholder="搜索收藏的文章..." class="search-input" />
+                        <button type="submit" class="search-btn">
+                            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path
+                                    d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14z">
+                                </path>
+                            </svg>
+                            搜索
+                        </button>
                     </form>
                 </div>
 
                 <div class="article-grid">
-                    <div v-for="item in collectedArticles" :key="item._id" class="article-card"
+                    <div v-for="item in collectedArticles" :key="item.id" class="article-card"
                         @click="goToArticle(item)">
                         <div class="card-image">
                             <img :src="item.cover" alt="">
@@ -54,6 +62,7 @@
 
                 <InfiniteScrollContainer 
                     :is-finished="isFinished"
+                    :is-loading="isLoading"
                     :load-more="loadMore"
                 />
 
@@ -78,7 +87,7 @@
 
     const { collectedArticles, confirmVisible, confirmItem, keyword,
         getCollectedArticles, goToArticle, showUnfavoriteConfirm, confirmUnfavorite,
-        closeConfirm, handleSearch, isFinished, loadMore,
+        closeConfirm, handleSearch, isFinished, isLoading, loadMore,
     } = useFullProfile()
 
     onMounted(async () => {
@@ -191,6 +200,12 @@
                     letter-spacing: 1px;
                 }
 
+                .filter-tools {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
                 .search-input {
                     background: @glass-bg-dark;
                     backdrop-filter: blur(15px);
@@ -207,9 +222,41 @@
                     }
 
                     &:focus {
-                        width: 400px;
+                        width: 360px;
                         border-color: @theme-blue;
                         background: rgba(255, 255, 255, 0.08);
+                    }
+                }
+
+                .search-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    flex-shrink: 0;
+                    padding: 12px 24px;
+                    border: none;
+                    border-radius: 50px;
+                    background: linear-gradient(45deg, @theme-blue, @theme-blue-dark);
+                    color: #fff;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(64, 158, 255, 0.3);
+                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+                    .search-icon {
+                        width: 16px;
+                        height: 16px;
+                        fill: currentColor;
+                    }
+
+                    &:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 8px 25px rgba(64, 158, 255, 0.5);
+                    }
+
+                    &:active {
+                        transform: translateY(0);
                     }
                 }
             }

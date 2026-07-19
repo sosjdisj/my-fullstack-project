@@ -1,6 +1,6 @@
 import { useRoute, useRouter } from 'vue-router';
 import { ref, computed } from 'vue';
-import { usePaginationCache, setLoadMoreContainerRef } from '@/utils/helpers'
+import { usePaginationCache, setLoadMoreContainerRef, autoLoadIfNotFillScreen } from '@/utils/helpers'
 import { usePageControl } from '@/composables/usePageControl'
 import { CACHE_KEYS } from '@/constants/cacheKeys';
 import type { ArticleCard } from '@/types/index'
@@ -50,14 +50,18 @@ export function useSearchResult() {
         )
         if (articlesData.list.length === 0) {
             isFinished.value = true
+            isLoading.value = false
             return;
         }
+        console.log(articlesData)
         articles.value = [...articles.value, ...articlesData.list]
 
         searchResult.value = articlesData.total
         nextPage()
 
         isLoading.value = false
+
+        await autoLoadIfNotFillScreen(loadSearchArticleList, isFinished.value)
 
 
     }

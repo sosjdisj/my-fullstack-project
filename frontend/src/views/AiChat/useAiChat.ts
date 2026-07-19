@@ -44,7 +44,7 @@ export function useAiChat() {
     const fetchConversations = async () => {
         try {
             const res = await get('/chat/conversations'); // 根据你后端路由调整
-            conversations.value = res.data.data.conversations;
+            conversations.value = res.data.data;
         } catch (error) {
             console.error('获取列表失败', error);
         }
@@ -89,8 +89,7 @@ export function useAiChat() {
             const res = cursor ?
                 await get(`/chat/${conversationId.value}/history`, { cursor: cursor }) :
                 await get(`/chat/${conversationId.value}/history`)
-
-            const newMessages = res.data.data.chatHistory || [];
+            const newMessages = res.data.data.messages || [];
 
             // 3. 判断是否加载完成：返回数量小于请求数量，标记不再加载
             if (newMessages.length < 20) {
@@ -145,6 +144,7 @@ export function useAiChat() {
             conversations.value.push(res.data.data)
 
             messages.value = [];
+            isFinished.value = false;
             isChatting.value = true;
             inputVal.value = '';
         } catch (error) {
@@ -199,14 +199,23 @@ export function useAiChat() {
                         }
 
                         if (messages.value[aiMessageIndex]) {
-                            messages.value[aiMessageIndex].content = data.content;
+                            messages.value[aiMessageIndex].content += data.content;
                         }
 
                         scrollToBottom();
                     } else if (data.type === 'title') {
                         // 如果后端返回了新标题，更新左侧列表里的标题
-                        const conv = conversations.value.find(c => c._id === conversationId.value);
+                        const conv = conversations.value.find(c => c.id === conversationId.value);
                         if (conv) conv.title = data.content;
+                    } else if (data.type === 'error') {
+                        // AI 服务异常：已收到部分回复则把错误填入占位消息，否则用提示框展示
+                        isLoading.value = false;
+                        const errMsg = data.content || 'AI 服务异常';
+                        if (!isFirstChunk && messages.value[aiMessageIndex]) {
+                            messages.value[aiMessageIndex].content = errMsg;
+                        } else {
+                            ElMessage.error(errMsg);
+                        }
                     }
                 },
                 onclose() {

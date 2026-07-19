@@ -1,10 +1,10 @@
 <template>
     <div class="Treehole">
         <div class="danmu" ref="danmu">
-            <danmaku :danmus="allDanmus" :channels="4" :speeds="100" :fontSize="18" :loop="false" :randomChannel="true"
-                is-suspend style="height: 100%; width: 100%;" use-slot enter>
+            <vue-danmaku :ref="setDanmakuRef" :danmus="allDanmus" :channels="4" :speeds="100" :loop="false"
+                :randomChannel="true" :isSuspend="true" style="height: 100%; width: 100%;">
 
-                <template v-slot:dm="{ danmu }">
+                <template #danmu="{ danmu }">
                     <div class="usertext">
                         <div class="content-wrapper">
                             <div class="avatar">
@@ -17,7 +17,7 @@
                         <div class="bottom-line"></div>
                     </div>
                 </template>
-            </danmaku>
+            </vue-danmaku>
         </div>
 
         <div class="danmaku-container">
@@ -35,10 +35,12 @@
 
 <script setup lang="ts">
     import { onMounted, onUnmounted } from 'vue'
-    import Danmaku from 'vue3-danmaku'
+    import vueDanmaku from 'vue-danmaku'
     import { useTreehole } from './useTreehole'
 
-    const { isShow, allDanmus, content, handleFocus, handleTreehole, initTreehole, clearIntervalTimer } = useTreehole()
+    const { isShow, allDanmus, content, setDanmakuRef,
+        handleFocus, handleTreehole, initTreehole, clearIntervalTimer
+    } = useTreehole()
 
     onMounted(() => {
         initTreehole()

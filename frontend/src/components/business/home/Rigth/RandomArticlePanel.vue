@@ -9,7 +9,7 @@
             </button>
         </div>
         <div class="stella">
-            <div class="iris" v-for="item in RandomArticle" :key="item._id" @click="handnavigateTo(item)">
+            <div class="iris" v-for="item in RandomArticle" :key="item.id" @click="handnavigateTo(item)">
                 <div class="iris-one">
                     <img v-lazy="item.cover" alt="">
                 </div>
@@ -46,16 +46,16 @@
     }
     const handnavigateTo = (item: ArticleNeighbor) => {
         router.push({
-            path: `/articleDetail/${item._id}`,
+            path: `/articleDetail/${item.id}`,
             query: {
-                id: item._id
+                id: item.id
             }
         })
     }
     const getRandomArticle = async () => {
         const resulTow = await get('/article/random/list')
         if (resulTow.success) {
-            RandomArticle.value = resulTow.data.data.list
+            RandomArticle.value = resulTow.data.data
         }
     }
 

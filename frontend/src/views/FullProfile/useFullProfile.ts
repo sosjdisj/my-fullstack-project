@@ -2,7 +2,7 @@ import { ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import type { collectedArticles } from '@/types/index'
 import { usePageControl } from "@/composables/usePageControl"
-import { usePaginationCache } from "@/utils/helpers"
+import { usePaginationCache, autoLoadIfNotFillScreen } from "@/utils/helpers"
 import { CACHE_KEYS } from "@/constants/cacheKeys"
 import { Delete } from "@/api/request"
 import { ElMessage } from 'element-plus'
@@ -41,19 +41,21 @@ export function useFullProfile() {
 
         if (articleListData.list.length === 0) {
             isFinished.value = true
+            isLoading.value = false
             return;
         }
         collectedArticles.value = [...collectedArticles.value, ...articleListData.list]
         nextPage()
-
         isLoading.value = false
+
+        await autoLoadIfNotFillScreen(getCollectedArticles, isFinished.value)
     }
 
     const goToArticle = (item: collectedArticles) => {
         router.push({
-            path: `/articleDetail/${item._id}`,
+            path: `/articleDetail/${item.id}`,
             query: {
-                id: item._id
+                id: item.id
             }
         })
     }
@@ -70,11 +72,12 @@ export function useFullProfile() {
 
     const confirmUnfavorite = async () => {
         if (confirmItem.value) {
-            const result = await Delete(`/profile/${confirmItem.value._id}/collects`)
+            console.log(confirmItem.value)
+            const result = await Delete(`/profile/${confirmItem.value.id}/collects`)
 
             if (result.success) {
                 collectedArticles.value = collectedArticles.value.filter(
-                    item => item._id !== confirmItem.value?._id
+                    item => item.id !== confirmItem.value?.id
                 )
                 ElMessage.info(result.message)
             }
@@ -83,6 +86,7 @@ export function useFullProfile() {
     }
 
     const handleSearch = async () => {
+
         if (isLoading.value || isFinished.value) return
 
         if(keyword.value==='') return getCollectedArticles()
@@ -101,12 +105,15 @@ export function useFullProfile() {
 
         if (result.list.length === 0) {
             isFinished.value = true
+            isLoading.value = false
             return
         }
 
         collectedArticles.value = [...collectedArticles.value, ...result.list]
         nextPage()
         isLoading.value = false
+
+        await autoLoadIfNotFillScreen(handleSearch, isFinished.value)
     }
 
     const resetSearchList = () => {
@@ -117,6 +124,7 @@ export function useFullProfile() {
 
     watch(keyword, () => {
         hasResetSearchState.value = false
+        isFinished.value = false
     })
 
     return {
@@ -131,6 +139,7 @@ export function useFullProfile() {
         closeConfirm,
         handleSearch,
         isFinished,
+        isLoading,
         loadMore: getCollectedArticles
     }
 }

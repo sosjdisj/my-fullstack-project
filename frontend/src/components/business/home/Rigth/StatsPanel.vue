@@ -10,7 +10,7 @@
         <div class="quote-container">
             <transition name="fade-slide" mode="out-in">
                 <p :key="value" class="quote">
-                    {{ quotesList[value]?.content }}
+                    {{ quotesList[value] }}
                 </p>
             </transition>
         </div>
@@ -56,10 +56,10 @@
 
     onMounted(async () => {
         const quotes = await get('/quotes/daily')
-
+        // console.log(quotes)
         if (quotes.success) {
 
-            quotesList.value = quotes.data.data.list
+            quotesList.value = quotes.data.data
             startAutoPlay()
         }
     })
