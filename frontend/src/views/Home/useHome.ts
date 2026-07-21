@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+// Vue API 由 unplugin-auto-import 全局注入
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { gsap } from 'gsap'
 import { useUserStore } from '@/stores/user'
@@ -12,12 +12,6 @@ export function useHome() {
     let time: number
     let clearScrollObserver: (() => void) | null = null;
     let clearLoadMoreObserver: (() => void) | null = null;
-    const currentIndex = ref(0)
-    const imgs = [
-        '/src/assets/13.png',
-        '/src/assets/5.jpg',
-        '/src/assets/12.png'
-    ]
 
     const ImgArr = ref<(HTMLElement | null)[]>([])
     const articleList = ref<Article[]>([])
@@ -34,29 +28,24 @@ export function useHome() {
 
     const ARTICLE_PATH = '/article'
 
-    const setImgRef = (el: HTMLElement | null, index: number) => {
-
-        if (el) ImgArr.value[index] = el
-    }
-
     //背景图变换
-    const startZoomAnimation = (index: number) => {
-        const nextImg = ImgArr.value[index];
-        if (!nextImg) return;
+    // const startZoomAnimation = (index: number) => {
+    //     const nextImg = ImgArr.value[index];
+    //     if (!nextImg) return;
 
-        ImgArr.value.forEach((img, i) => {
-            if (i === index) {
-                // 当前图片：执行缩放 + 淡入
-                gsap.fromTo(img,
-                    { scale: 1, opacity: 0 },
-                    { scale: 1.1, opacity: 1, duration: 5, ease: 'power1.out' }
-                );
-            } else {
-                // 其他图片：淡出并降低层级，防止遮挡
-                gsap.to(img, { opacity: 0, zIndex: 0, duration: 1.5 });
-            }
-        });
-    }
+    //     ImgArr.value.forEach((img, i) => {
+    //         if (i === index) {
+    //             // 当前图片：执行缩放 + 淡入
+    //             gsap.fromTo(img,
+    //                 { scale: 1, opacity: 0 },
+    //                 { scale: 1.1, opacity: 1, duration: 5, ease: 'power1.out' }
+    //             );
+    //         } else {
+    //             // 其他图片：淡出并降低层级，防止遮挡
+    //             gsap.to(img, { opacity: 0, zIndex: 0, duration: 1.5 });
+    //         }
+    //     });
+    // }
 
     const loadMore = async () => {
         if (isLoading.value || isFinished.value) return;
@@ -84,19 +73,19 @@ export function useHome() {
 
     const initHomePage = async () => {
 
-        // 等待 DOM 更新后再执行动画
+        // // 等待 DOM 更新后再执行动画
         setTimeout(() => {
             //右边小组件动画
             initHomeRightScrollAnimations('.home-right>*')
         }, 0)
 
-        startZoomAnimation(0)
+        // startZoomAnimation(0)
 
-        //背景图变换
-        time = setInterval(() => {
-            currentIndex.value = (currentIndex.value + 1) % imgs.length
-            startZoomAnimation(currentIndex.value)
-        }, 6000)
+        // //背景图变换
+        // time = setInterval(() => {
+        //     currentIndex.value = (currentIndex.value + 1) % imgs.length
+        //     startZoomAnimation(currentIndex.value)
+        // }, 6000)
 
         //导航栏的显示与隐藏
         observer.value = new IntersectionObserver(
@@ -117,7 +106,6 @@ export function useHome() {
     }
     const cleanupHomePage = () => {
         ScrollTrigger.getAll().forEach(trigger => trigger.kill())
-        clearInterval(time)
         gsap.killTweensOf(ImgArr.value)
         if (observer.value) {
             observer.value.disconnect()
@@ -145,11 +133,9 @@ export function useHome() {
     }
 
     return {
-        imgs,
         articleList,
         isFinished,
         isShow,
-        setImgRef,
         initHomePage,
         cleanupHomePage,
         setLoadMoreContainerRefWrapper,

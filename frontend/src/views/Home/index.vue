@@ -2,11 +2,15 @@
     <div class="home">
         <div class="background-slideshow">
             <div class="wenzi">
-                <TextGlitch />
+                <GradientText class="custom-title"  :colors="['#5227FF', '#FF9FFC', '#B19EEF']" :animation-speed="8">
+                    欢迎来到我的博客！
+                </GradientText>
+                <!-- <TextGlitch /> -->
                 <TypeWriterEffect />
             </div>
-            <div v-for="(value, index) in imgs" :key="index" class='background-layer'>
-                <img :src="value" alt="" :ref="el => setImgRef((el as HTMLElement), index)">
+            <div class='background-layer'>
+                <SplashCursor v-if="showSplash" :splat-radius='0.2' :curl='3' :shading='true' />
+                <img :src="imgUrl" alt="" fetchpriority="high" decoding="async">
             </div>
         </div>
 
@@ -22,10 +26,7 @@
 
                 <ArticleList :articleList />
 
-                <InfiniteScrollContainer 
-                    :is-finished="isFinished"
-                    :load-more="loadMore"
-                />
+                <InfiniteScrollContainer :is-finished="isFinished" :load-more="loadMore" />
             </div>
 
             <div class="right">
@@ -45,9 +46,9 @@
                     <StatsPanel />
                 </div>
             </div>
-            
+
             <BackToTopTrigger :isShow="isShow" />
-            
+
         </div>
     </div>
 
@@ -55,26 +56,42 @@
 </template>
 
 <script setup lang="ts">
-    import Animation from '@/components/business/home/ArticleList/Animation.vue'
     import TypeWriterEffect from '@/components/business/home/TypeWriterEffect.vue'
-    import TextGlitch from '@/components/business/home/TextGlitch.vue'
     import ArticleList from '@/components/business/home/ArticleList/ArticleList.vue';
     import ArticleListHeader from '@/components/business/home/ArticleList/ArticleListHeader.vue';
     import PascalCase from '@/components/business/home/Rigth/PascalCase.vue'
-    import SidebarNoticePanel from '@/components/business/home/Rigth/SidebarNoticePanel.vue'
-    import DigitalClock from '@/components/business/home/Rigth/DigitalClock.vue'
-    import RandomArticlePanel from '@/components/business/home/Rigth/RandomArticlePanel.vue'
-    import HotTagSection from '@/components/business/home/Rigth/HotTagSection.vue';
-    import StatsPanel from '@/components/business/home/Rigth/StatsPanel.vue'
     import { useHome } from './useHome';
-    import { onMounted, onUnmounted, } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import BackToTopTrigger from '@/components/ui/BackToTopTrigger.vue';
     import InfiniteScrollContainer from '@/components/business/InfiniteScrollContainer.vue';
+    import GradientText from '@/components/ui/gradient-text/GradientText.vue'
+    import imgUrl from '@/assets/1.png'
 
-    const { imgs, articleList, isFinished, isShow, setImgRef, initHomePage,
+    // 非首屏关键组件：异步加载，避免阻塞首屏渲染
+    const Animation = defineAsyncComponent(() => import('@/components/business/home/ArticleList/Animation.vue'))
+    const SplashCursor = defineAsyncComponent(() => import('@/components/ui/splash-cursor/SplashCursor.vue'))
+    const SidebarNoticePanel = defineAsyncComponent(() => import('@/components/business/home/Rigth/SidebarNoticePanel.vue'))
+    const DigitalClock = defineAsyncComponent(() => import('@/components/business/home/Rigth/DigitalClock.vue'))
+    const RandomArticlePanel = defineAsyncComponent(() => import('@/components/business/home/Rigth/RandomArticlePanel.vue'))
+    const HotTagSection = defineAsyncComponent(() => import('@/components/business/home/Rigth/HotTagSection.vue'))
+    const StatsPanel = defineAsyncComponent(() => import('@/components/business/home/Rigth/StatsPanel.vue'))
+
+    // SplashCursor 是 WebGL 重型组件，延迟到浏览器空闲后再挂载，避免抢占首屏主线程
+    const showSplash = ref(false)
+    const scheduleSplash = () => {
+        const start = () => { showSplash.value = true }
+        if ('requestIdleCallback' in window) {
+            ;(window as any).requestIdleCallback(start, { timeout: 2000 })
+        } else {
+            setTimeout(start, 1500)
+        }
+    }
+
+    const { articleList, isFinished, isShow, initHomePage,
         cleanupHomePage, loadMore, setScroll } = useHome()
 
     onMounted(async () => {
+        scheduleSplash()
         await loadMore()
         await initHomePage()
     })
@@ -92,7 +109,7 @@
         width: 100%;
         height: auto;
         // 关键改动：换成更深邃、带点蓝紫调的深色背景，能更好地衬托玻璃感
-        background: linear-gradient(to bottom, #1a1c2c 0%, #0d0e14 100%);
+        // background: linear-gradient(to bottom, #1a1c2c 0%, #0d0e14 100%);
         min-height: 100vh;
 
         .background-slideshow {
@@ -122,6 +139,11 @@
                 gap: 24px;
                 flex-direction: column;
                 text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+
+                .custom-title{
+                    font-size: 60px;
+                    font-weight: 600;
+                }
             }
 
             .background-layer {
@@ -134,7 +156,6 @@
                     width: 100%;
                     height: 100%;
                     object-fit: cover;
-                    opacity: 0;
                 }
             }
         }
