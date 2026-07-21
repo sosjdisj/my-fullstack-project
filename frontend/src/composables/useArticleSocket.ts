@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from 'vue';
+// Vue API 由 unplugin-auto-import 全局注入
 import { socket } from '@/socket/index';
 
 export function useArticleSocket(articleId: string) {

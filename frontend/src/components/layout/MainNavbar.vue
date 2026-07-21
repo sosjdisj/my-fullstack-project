@@ -51,10 +51,8 @@
 
 <script setup lang="ts">
   import { useUserStore } from '@/stores/user'
-  import { reactive, computed, ref } from 'vue';
-  import { useRoute } from 'vue-router';
+  // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
   import Avatar from './Avatar.vue'
-  import { Search } from '@element-plus/icons-vue'
   import PascalCase from '../ui/PascalCase.vue';
 
   const route = useRoute()
@@ -167,6 +165,7 @@
   .header-container {
     width: 100%;
     height: 64px;
+    box-sizing: content-box;
     display: flex;
     position: fixed;
     top: 0;

@@ -110,18 +110,8 @@
 </template>
 
 <script setup lang="ts">
-    import { onMounted, onUnmounted, ref, watch } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import MarkdownBubble from '@/components/ui/MarkdownBubble .vue';
-    import {
-        Lightning,
-        Expand,
-        Fold,
-        Plus,
-        ChatLineRound,
-        MagicStick,
-        Odometer,
-        Top
-    } from '@element-plus/icons-vue';
     import { useAiChat } from '@/views/AiChat/useAiChat'
 
     const { isCollapsed, inputVal, isLoading, messages, handleSend, tags,
@@ -206,6 +196,7 @@
 
         .sidebar-glass {
             width: 260px;
+            box-sizing: content-box;
             background: rgba(15, 15, 17, 0.6);
             backdrop-filter: blur(20px);
             border-right: 1px solid rgba(255, 255, 255, 0.03);
@@ -276,6 +267,7 @@
                 .new-chat-btn {
                     width: 100%;
                     padding: 10px 18px;
+                    box-sizing: content-box;
                     border-radius: 24px;
                     border: 1px solid rgba(255, 255, 255, 0.06);
                     background: rgba(255, 255, 255, 0.03);
@@ -393,6 +385,7 @@
                     .ai-avatar-glow {
                         width: 60px;
                         height: 60px;
+                        box-sizing: content-box;
                         background: rgba(255, 255, 255, 0.05);
                         border: 1px solid rgba(255, 255, 255, 0.1);
                         border-radius: 50%;
@@ -467,6 +460,7 @@
                         .ai-avatar {
                             width: 36px;
                             height: 36px;
+                            box-sizing: content-box;
                             border-radius: 10px;
                             background: rgba(255, 255, 255, 0.1);
                             backdrop-filter: blur(10px);

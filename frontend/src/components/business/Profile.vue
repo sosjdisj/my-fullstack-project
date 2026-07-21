@@ -35,9 +35,8 @@
 </template>
 
 <script lang="ts" setup>
-    import { ref, computed } from 'vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { useUserStore } from '@/stores/user'
-    import { Camera } from '@element-plus/icons-vue'
 
     const props = defineProps<{
         username: string,
@@ -92,6 +91,7 @@
 <style lang="less" scoped>
     .avatar-card {
         width: 280px; // 使用固定宽度在响应式中更稳
+        box-sizing: content-box;
         padding: 30px 20px;
         background: rgba(255, 255, 255, 0.05); // 极透明白
         backdrop-filter: blur(20px);

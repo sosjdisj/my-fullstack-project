@@ -1,9 +1,7 @@
-import { reactive } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+// Vue/Vue Router API 由 unplugin-auto-import 全局注入
 import { validateLogin, handleValidationResult, validateField } from '@/utils/validation'
 import { post } from '@/api/request'
 import { useUserStore } from '@/stores/user'
-import { ElMessage } from 'element-plus'
 import { useFormValidation } from '@/composables/useFormValidation'
 import { saveUserInfo } from '@/utils/helpers'
 import { sha256 } from '@/utils/crypto'

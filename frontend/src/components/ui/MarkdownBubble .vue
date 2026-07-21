@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-    import { computed } from 'vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { marked } from 'marked'
     import DOMPurify from 'dompurify'
 

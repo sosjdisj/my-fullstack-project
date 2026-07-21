@@ -1,5 +1,5 @@
-import { ref, type ComponentPublicInstance, type VNodeRef } from 'vue'
-import { ElMessage } from 'element-plus'
+// Vue API 由 unplugin-auto-import 全局注入
+import type { VNodeRef } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { get, post } from '@/api/request'
 import type { DanmakusList } from '@/types/index'

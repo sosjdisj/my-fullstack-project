@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, onMounted, onUnmounted } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
 
     const displayText = ref<string>('');
     const phrases = ref([

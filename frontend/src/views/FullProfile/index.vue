@@ -81,7 +81,7 @@
     import UnfavoriteConfirm from '@/components/ui/UnfavoriteConfirm.vue';
     import router from '@/router';
     import { useFullProfile } from '@/views/FullProfile/useFullProfile'
-    import { onMounted } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { formatDate } from '@/utils/helpers'
     import InfiniteScrollContainer from '@/components/business/InfiniteScrollContainer.vue';
 
@@ -213,6 +213,7 @@
                     padding: 12px 25px;
                     border-radius: 50px;
                     width: 300px;
+                    box-sizing: content-box;
                     color: #fff;
                     outline: none;
                     transition: all 0.4s ease;

@@ -1,6 +1,5 @@
 import { useUserStore } from "@/stores/user";
 import axios from "axios";
-import { ElMessage } from 'element-plus'
 import { clearUser, saveUserInfo } from '@/utils/helpers'
 
 const service = axios.create({

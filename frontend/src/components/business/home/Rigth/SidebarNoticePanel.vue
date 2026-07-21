@@ -21,6 +21,7 @@
     .sidebar-panel {
         width: 100%;
         height: 241.35px;
+        box-sizing: content-box;
         opacity: 0;
         background: rgba(20, 20, 25, 0.6); // 使用深色半透，压住背景
         backdrop-filter: blur(15px);

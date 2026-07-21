@@ -28,10 +28,8 @@
 </template>
 
 <script setup lang="ts">
-    import { Setting, SwitchButton } from '@element-plus/icons-vue'
-    import { useRouter, useRoute } from 'vue-router'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { useUserStore } from '@/stores/user'
-    import { computed } from 'vue'
     import { clearUser } from '@/utils/helpers'
     import { post } from '@/api/request'
 
@@ -127,6 +125,7 @@
         .Avatar-div {
             width: 120px;
             padding: 8px;
+            box-sizing: content-box;
             display: flex;
             flex-direction: column;
             background: rgba(255, 255, 255, 0.1); // 玻璃感背景

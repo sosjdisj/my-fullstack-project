@@ -1,4 +1,4 @@
-import { reactive } from "vue"
+// Vue API 由 unplugin-auto-import 全局注入
 import type { FormField, LoginResult } from '../types/index'
 
 // 错误信息存储

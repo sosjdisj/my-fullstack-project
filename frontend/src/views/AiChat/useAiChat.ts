@@ -1,8 +1,7 @@
-import { ref, computed, nextTick, onUnmounted } from 'vue';
+// Vue API 由 unplugin-auto-import 全局注入
 import { get, post } from '@/api/request';
 import type { AiChat, Conversations } from '@/types/index';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
-import { ElMessage } from 'element-plus';
 import { setLoadMoreContainerRef } from '@/utils/helpers';
 
 export function useAiChat() {

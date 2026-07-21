@@ -1,5 +1,4 @@
-import { ref, computed, type Ref } from 'vue'
-import { useRoute } from 'vue-router'
+// Vue/Vue Router API 与 Ref 类型由 unplugin-auto-import 全局注入
 import type { Article, ArticleNeighbor, ArticleComment } from '@/types/index'
 import { setLoadMoreContainerRef, usePaginationCache } from '@/utils/helpers'
 import { CACHE_KEYS } from '@/constants/cacheKeys'

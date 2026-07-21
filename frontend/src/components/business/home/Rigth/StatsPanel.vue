@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
     import { get } from '@/api/request';
-    import { onMounted, onUnmounted, ref } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
 
     interface Quote {
         content: string
@@ -75,6 +75,7 @@
     .infoCard {
         width: inherit;
         height: 150px;
+        box-sizing: content-box;
         background: rgba(20, 20, 25, 0.6); // 使用深色半透，压住背景
         backdrop-filter: blur(15px);
         border: 1px solid rgba(255, 255, 255, 0.1);

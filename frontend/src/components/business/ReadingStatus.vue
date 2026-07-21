@@ -38,6 +38,7 @@
 
         height: 32px;
         padding: 0 12px;
+        box-sizing: content-box;
         display: flex;
         align-items: center;
         gap: 8px;

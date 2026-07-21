@@ -1,4 +1,4 @@
-import { nextTick } from 'vue'
+// Vue API 由 unplugin-auto-import 全局注入
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useUserStore } from '@/stores/user'

@@ -21,11 +21,9 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, onMounted } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { get } from '@/api/request'
-    import { useRouter } from 'vue-router';
     import type { TabCategoryItem } from '@/types/index'
-    import { PriceTag } from '@element-plus/icons-vue'
 
     const tagsList = ref<TabCategoryItem[]>([])
     const router = useRouter()
@@ -51,6 +49,7 @@
     .tag-cloud-card {
         width: 100%;
         min-height: 260px;
+        box-sizing: content-box;
         background: rgba(255, 255, 255, 0.03);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);

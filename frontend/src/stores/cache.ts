@@ -1,5 +1,4 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
+// Vue/Pinia API 由 unplugin-auto-import 全局注入
 import { get } from '@/api/request'
 
 interface CacheItem<T = any> {

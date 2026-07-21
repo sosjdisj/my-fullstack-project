@@ -2,7 +2,7 @@
     <div class="register-page">
 
         <div class="bg-image">
-            <img src="/src/assets/【哲风壁纸】6K-6K画质.png" alt="">
+            <!-- <img src="/src/assets/【哲风壁纸】6K-6K画质.png" alt=""> -->
         </div>
 
         <form class="register-card" @submit.prevent="GoregisterUser">

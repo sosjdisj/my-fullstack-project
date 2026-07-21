@@ -9,7 +9,7 @@
 
 <script lang="ts" setup>
     import type { Article } from '@/types/index'
-    import { computed } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { formatDate } from '@/utils/helpers'
 
     const props = defineProps<{

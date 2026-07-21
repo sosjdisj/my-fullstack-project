@@ -32,8 +32,7 @@
 
 <script lang="ts" setup>
     import type { Article } from '@/types/index'
-    import { useRouter } from 'vue-router';
-    import { ref, watch, nextTick, onMounted } from 'vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { ScrollTrigger } from 'gsap/ScrollTrigger'
     import { gsap } from 'gsap'
     import { formatDate } from '@/utils/helpers'
@@ -88,6 +87,7 @@
 <style lang="less" scoped>
     .article-container {
         width: 850px;
+        box-sizing: content-box;
         padding: 20px;
         perspective: 1000px; // 为3D效果做准备
     }

@@ -1,5 +1,4 @@
-import { useRoute, useRouter } from 'vue-router';
-import { ref, computed } from 'vue';
+// Vue/Vue Router API 由 unplugin-auto-import 全局注入
 import { usePaginationCache, setLoadMoreContainerRef, autoLoadIfNotFillScreen } from '@/utils/helpers'
 import { usePageControl } from '@/composables/usePageControl'
 import { CACHE_KEYS } from '@/constants/cacheKeys';

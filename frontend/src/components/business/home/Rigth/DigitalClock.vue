@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-    import { ref, onMounted, onUnmounted } from 'vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
 
     let timer: number
     const time = ref({
@@ -52,6 +52,7 @@
     .clock {
         width: inherit;
         height: 139.66px;
+        box-sizing: content-box;
         background: rgba(20, 20, 25, 0.6); // 使用深色半透，压住背景
         backdrop-filter: blur(15px);
         border: 1px solid rgba(255, 255, 255, 0.1);

@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onUnmounted } from 'vue'
+  // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
   import { setLoadMoreContainerRef } from '@/utils/helpers'
   import LoadMore from '@/components/ui/LoadMore.vue'
 

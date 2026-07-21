@@ -1,11 +1,9 @@
-import { ref, watch } from "vue"
-import { useRouter } from "vue-router"
+// Vue/Vue Router API 由 unplugin-auto-import 全局注入
 import type { collectedArticles } from '@/types/index'
 import { usePageControl } from "@/composables/usePageControl"
 import { usePaginationCache, autoLoadIfNotFillScreen } from "@/utils/helpers"
 import { CACHE_KEYS } from "@/constants/cacheKeys"
 import { Delete } from "@/api/request"
-import { ElMessage } from 'element-plus'
 
 export function useFullProfile() {
     const router = useRouter()

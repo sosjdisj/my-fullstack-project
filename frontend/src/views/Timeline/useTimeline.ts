@@ -1,7 +1,6 @@
-import { ref, nextTick } from 'vue'
+// Vue/Vue Router API 由 unplugin-auto-import 全局注入
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { gsap } from 'gsap'
-import { useRoute, useRouter } from 'vue-router'
 import { get } from '@/api/request'
 import type { TimelineList } from '@/types/index'
 import { setLoadMoreContainerRef, autoLoadIfNotFillScreen } from '@/utils/helpers'

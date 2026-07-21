@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-    import { onMounted, onUnmounted, ref } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import Articlen from '@/components/business/article/Article.vue'
     import ArticleHeader from '@/components/business/article/ArticleHeader.vue';
     import Statement from '@/components/business/article/Statement.vue'

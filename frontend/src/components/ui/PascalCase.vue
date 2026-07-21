@@ -47,9 +47,7 @@
 </template>
 
 <script setup lang="ts">
-    import { useRouter } from 'vue-router';
-    import { ref, watch, nextTick, onMounted } from 'vue';
-    import { Document, InfoFilled } from '@element-plus/icons-vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { get } from '@/api/request';
 
     const props = defineProps({
@@ -175,6 +173,7 @@
         right: -40px; // 根据你的图标位置微调
         width: 0;
         height: 0;
+        box-sizing: content-box;
         opacity: 0;
         overflow: hidden;
         pointer-events: none;
@@ -205,6 +204,7 @@
         .search-header {
             input {
                 width: 100%;
+                box-sizing: content-box;
                 background: rgba(255, 255, 255, 0.1);
                 border: 1px solid @glass-border;
                 border-radius: 12px;

@@ -1,6 +1,4 @@
-import { ElMessage } from 'element-plus'
-import type { Ref } from 'vue';
-import { ref } from 'vue';
+// Vue API 由 unplugin-auto-import 全局注入，无需显式导入
 
 const countdown = ref(60)
 

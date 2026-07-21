@@ -1,5 +1,4 @@
-import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router';
+// Vue/Vue Router API 由 unplugin-auto-import 全局注入
 import type { LocationQueryValueRaw } from 'vue-router'
 import type { Article } from '@/types/index'
 import { usePaginationCache, setLoadMoreContainerRef, autoLoadIfNotFillScreen } from '@/utils/helpers'

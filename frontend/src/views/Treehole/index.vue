@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-    import { onMounted, onUnmounted } from 'vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import vueDanmaku from 'vue-danmaku'
     import { useTreehole } from './useTreehole'
 
@@ -118,6 +118,7 @@
                     .avatar {
                         width: 45px;
                         height: 45px;
+                        box-sizing: content-box;
                         border-radius: 50%;
                         background: rgba(255, 255, 255, 0.3);
                         border: 1px solid rgba(255, 255, 255, 0.4);
@@ -228,6 +229,7 @@
                     .danmaku-input {
                         width: 280px;
                         height: 40px;
+                        box-sizing: content-box;
                         background: transparent;
                         border: none;
                         outline: none;

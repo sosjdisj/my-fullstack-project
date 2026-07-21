@@ -10,7 +10,10 @@
 
             <div class="btn-group">
                 <div class="action-item" :class="{ 'is-active': isLiked }" @click="handtoggleLike">
-                    <i :class="isLiked ? 'fa-solid fa-thumbs-up' : 'fa-regular fa-thumbs-up'"></i>
+                    <el-icon :size="20">
+                        <StarFilled v-show="isLiked" />
+                        <Star v-show="!isLiked" />
+                    </el-icon>
                     <span class="count">{{ likes }}</span>
                 </div>
 
@@ -23,7 +26,7 @@
                 </div>
 
                 <div class="action-item share" @click="handleShareClick">
-                    <i class="fa-solid fa-share-nodes"></i>
+                    <el-icon :size="20"><Share /></el-icon>
                     <span>分享</span>
                 </div>
             </div>
@@ -45,12 +48,9 @@
 </template>
 
 <script setup lang="ts">
-    import { Star, StarFilled } from '@element-plus/icons-vue'
-    import { ref, computed, onMounted } from 'vue';
-    import { useRoute, useRouter } from 'vue-router';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import type { Article, ArticleNeighbor } from '@/types/index'
     import { Delete, post } from '@/api/request'
-    import { ElMessage } from 'element-plus'
     import { useUserStore } from '@/stores/user'
 
     const route = useRoute()
@@ -252,6 +252,7 @@
                 transform: translateX(-50%) translateY(10px);
                 width: 160px;
                 padding: 12px;
+                box-sizing: content-box;
                 background: rgba(40, 40, 45, 0.95);
                 border: 1px solid @glass-border;
                 border-radius: 12px;

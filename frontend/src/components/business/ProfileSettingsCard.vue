@@ -35,8 +35,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { Refresh } from '@element-plus/icons-vue';
+// Vue API 由 unplugin-auto-import 全局注入
 import type { Mark } from '@/types/index';
 
 // 定义 props
@@ -63,6 +62,7 @@ const handleSubmit = () => {
 .Form-card {
     width: 45%;
     padding: 40px;
+    box-sizing: content-box;
     background: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
@@ -113,6 +113,7 @@ const handleSubmit = () => {
         .glass-input,
         .glass-textarea {
             width: 100%;
+            box-sizing: content-box;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;

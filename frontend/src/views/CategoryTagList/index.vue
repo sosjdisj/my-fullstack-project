@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-    import { onMounted } from 'vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { useCategoryTagList } from '@/views/CategoryTagList/useCategoryTagList'
 
     const props = defineProps<{

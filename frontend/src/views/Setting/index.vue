@@ -7,7 +7,7 @@
     </div>
 </template>
 <script lang="ts" setup>
-    import { onMounted } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import Profile from '@/components/business/Profile.vue'
     import ProfileSettingsCard from '@/components/business/ProfileSettingsCard.vue'
     import { useSetting } from '@/views/Setting/useSetting'
@@ -34,6 +34,7 @@
         .Form-card {
             width: 45%;
             padding: 40px;
+            box-sizing: content-box;
             background: rgba(255, 255, 255, 0.04);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
@@ -84,6 +85,7 @@
                 .glass-input,
                 .glass-textarea {
                     width: 100%;
+                    box-sizing: content-box;
                     background: rgba(255, 255, 255, 0.05);
                     border: 1px solid rgba(255, 255, 255, 0.2);
                     border-radius: 12px;

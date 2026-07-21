@@ -11,7 +11,7 @@
 
 <script lang="ts" setup>
     import { useAppStore } from '@/stores/app'
-    import { onMounted } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
 
     const store = useAppStore()
 
@@ -35,6 +35,7 @@
 
         height: 32px; // 显著缩小高度
         padding: 0 12px;
+        box-sizing: content-box;
         display: flex;
         align-items: center;
         gap: 8px;

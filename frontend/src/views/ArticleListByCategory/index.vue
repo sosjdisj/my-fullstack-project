@@ -45,9 +45,8 @@ t'sts<template>
 </template>
 
 <script lang="ts" setup>
-    import { onMounted, onUnmounted } from 'vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { useArticleListByCategory } from './useArticleListByCategory'
-    import { Collection } from '@element-plus/icons-vue';
     import InfiniteScrollContainer from '@/components/business/InfiniteScrollContainer.vue';
 import { formatDate } from '@/utils/helpers';
 

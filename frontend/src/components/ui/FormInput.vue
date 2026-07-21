@@ -19,7 +19,7 @@
 </template>
 
 <script lang="ts" setup>
-    import { computed, ref } from 'vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import type { FormField, LoginResult } from '@/types/index'
 
     const emit = defineEmits(['update-form-field', 'handCheck'])

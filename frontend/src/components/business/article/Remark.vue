@@ -36,8 +36,7 @@
 </template>
 
 <script setup lang="ts">
-    import { ref } from 'vue';
-    import { ElMessage } from 'element-plus'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { post } from '@/api/request';
 
     const props = defineProps<{

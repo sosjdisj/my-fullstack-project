@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
+  // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
   import { useUserStore } from '@/stores/user'
 
   const store = useUserStore()

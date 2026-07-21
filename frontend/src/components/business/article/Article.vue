@@ -41,8 +41,7 @@
 </template>
 
 <script setup lang="ts">
-    import { ChatDotRound } from '@element-plus/icons-vue'
-    import { onMounted, onUnmounted, ref } from 'vue'//用于定义异步组件的函数
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入（原 import 行用于定义异步组件的函数）
     import PascalCase from '@/components/business/home/Rigth/PascalCase.vue'
     import SidebarNoticePanel from '@/components/business/home/Rigth/SidebarNoticePanel.vue'
     import DigitalClock from '@/components/business/home/Rigth/DigitalClock.vue'
@@ -105,6 +104,7 @@
         .pulseWave {
             width: 65%;
             min-height: 120vh;
+            box-sizing: content-box;
             background: @glass-bg;
             backdrop-filter: @glass-blur;
             border: 1px solid @glass-border;
@@ -133,6 +133,7 @@
     .Comment {
         width: 65px;
         height: 65px;
+        box-sizing: content-box;
         position: fixed;
         bottom: 25%;
         right: 27px;
@@ -198,6 +199,7 @@
     .ScrollProgress {
         width: 65px;
         height: 65px;
+        box-sizing: content-box;
         position: fixed;
         bottom: 13%;
         right: 27px;

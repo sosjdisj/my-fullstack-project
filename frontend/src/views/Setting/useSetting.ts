@@ -1,6 +1,5 @@
-import { ref } from 'vue';
+// Vue API 由 unplugin-auto-import 全局注入
 import { get, getModifiedFields, patch } from '@/api/request';
-import { ElMessage } from 'element-plus'
 import type { Mark } from '@/types/index'
 import { buildArticleFormData, deepEqual, isFormDataComplete } from '@/utils/helpers';
 import { useUserStore } from '@/stores/user'

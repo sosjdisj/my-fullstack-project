@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-    import { computed, ref, onMounted, onUnmounted } from 'vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
 
     const props = defineProps<{
         modelValue: string

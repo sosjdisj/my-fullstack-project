@@ -1,4 +1,4 @@
-import { useRouter } from 'vue-router'
+// Vue Router API 由 unplugin-auto-import 全局注入
 import type { FormField, LoginResult } from '@/types/index'
 import { errors as AllServiceErrors, clearErrors, hasNoErrors, validateLogin, validateField, handleValidationResult } from '@/utils/validation'
 

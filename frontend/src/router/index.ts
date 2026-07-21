@@ -1,6 +1,4 @@
-import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { ElMessage } from 'element-plus'
+import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
   {
@@ -48,11 +46,6 @@ const routes = [
     path: '/setting',
     component: () => import('@/views/Setting/index.vue')
   },
-  // {
-  //   name: '相册',
-  //   path: '/gallery',
-  //   component: () => import('@/views/Gallery.vue')
-  // },
   {
     name: '登录',
     path: '/login',
@@ -91,7 +84,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHashHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior() {
     // 始终滚动到顶部（x: 水平位置, y: 垂直位置）

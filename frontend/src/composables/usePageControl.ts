@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+// Vue API 由 unplugin-auto-import 全局注入，无需显式导入
 
 export function usePageControl(initialPage = "1") {
     const page = ref<string>(initialPage)

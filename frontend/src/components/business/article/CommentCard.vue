@@ -45,6 +45,7 @@
         display: flex;
         gap: 16px;
         padding: 12px;
+        box-sizing: content-box;
         transition: all 0.3s ease;
 
         &:hover {

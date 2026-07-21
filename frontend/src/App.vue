@@ -2,12 +2,15 @@
   import MainNavbar from './components/layout/MainNavbar.vue'
   import '@/styles/初始化.css'
   import { useUserStore } from '@/stores/user'
-  import { onMounted, onUnmounted, computed } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
-  import OnlineStatus from '@/components/business/OnlineStatus.vue'
+  // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
   import CollapseButton from '@/components/ui/CollapseButton.vue'
   import { get } from '@/api/request'
   import { saveUserInfo, clearUser } from '@/utils/helpers'
+
+  // 非关键组件（包含 Socket.IO 连接）异步加载，不阻塞首屏渲染
+  const OnlineStatus = defineAsyncComponent({
+    loader: () => import('@/components/business/OnlineStatus.vue'),
+  })
 
   const store = useUserStore()
   const route = useRoute()
@@ -67,7 +70,6 @@
 </template>
 
 <style lang="less">
-
   // 为主应用添加命名空间以实现样式隔离
   #app {
     width: 100%;

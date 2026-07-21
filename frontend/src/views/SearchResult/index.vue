@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-    import { onMounted, onUnmounted } from 'vue';
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { useSearchResult } from './useSearchResult';
     import InfiniteScrollContainer from '@/components/business/InfiniteScrollContainer.vue';
     import { formatDate } from '@/utils/helpers'

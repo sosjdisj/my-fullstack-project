@@ -23,9 +23,8 @@
 </template>
 
 <script lang="ts" setup>
-    import { ref, onMounted } from 'vue'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import type { ArticleNeighbor } from '@/types/index'
-    import { useRouter } from 'vue-router';
     import { get } from '@/api/request'
     import { formatDate } from '@/utils/helpers'
 
@@ -68,6 +67,7 @@
     .luna {
         width: inherit;
         height: 348.38px;
+        box-sizing: content-box;
         background: rgba(20, 20, 25, 0.6); // 使用深色半透，压住背景
         backdrop-filter: blur(15px);
         border: 1px solid rgba(255, 255, 255, 0.1);

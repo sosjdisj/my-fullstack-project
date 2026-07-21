@@ -1,4 +1,5 @@
-import type { Directive, DirectiveBinding } from "vue"
+// Vue API 由 unplugin-auto-import 全局注入；Directive 类型不在重导出列表，需保留
+import type { Directive } from "vue"
 
 //在el上扩展自定义属性
 declare global {

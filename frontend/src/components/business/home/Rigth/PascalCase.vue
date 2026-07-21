@@ -39,11 +39,9 @@
 </template>
 
 <script lang="ts" setup>
-    import { inject, computed } from 'vue'
-    import { useRouter } from 'vue-router'
+    // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import type { Article } from '@/types/index'
     import { useUserStore } from '@/stores/user'
-    import { useRoute } from 'vue-router'
 
     const route = useRoute()
 
@@ -59,6 +57,7 @@
     .right-one-card {
         width: 100%;
         height: auto;
+        box-sizing: content-box;
         min-height: 320px;
         border-radius: 20px;
         overflow: hidden;
@@ -115,6 +114,7 @@
                 .top-avatar {
                     width: 80px;
                     height: 80px;
+                    box-sizing: content-box;
                     border-radius: 50%;
                     background-color: #eee;
                     background-size: cover;

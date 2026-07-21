@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /register
+Disallow: /reset
+Disallow: /setting
+Disallow: /aiChat
+Disallow: /fullProfile
+Disallow: /musicPlayer
+
+Sitemap: https://example.com/sitemap.xml
