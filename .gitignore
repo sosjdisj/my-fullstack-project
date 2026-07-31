@@ -18,6 +18,10 @@ build/
 */.env.local
 */.env.*.local
 
+# Spring Boot local config (contains secrets)
+application-local.yml
+*/application-local.yml
+
 # Log files
 logs/
 *.log
@@ -104,3 +108,7 @@ public/uploads/
 
 # Local Netlify folder
 .netlify
+
+.auto-imports.d.ts
+.components.d.ts
+.public/mockServiceWorker.js

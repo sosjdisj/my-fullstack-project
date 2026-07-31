@@ -17,6 +17,7 @@
     "lint": "run-s lint:*"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@lucide/vue": "^1.25.0",
     "@micro-zoe/micro-app": "^1.0.0-rc.28",

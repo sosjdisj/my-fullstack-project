@@ -1,18 +1,17 @@
-from langchain_ollama import ChatOllama
-from langchain.agents import create_agent
-from langchain_core.messages import AIMessage, HumanMessage, BaseMessage
 import logging
 
-import config
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+
+from services.react_agent import ReActAgent
 from tools.article_tools import article_tools
-from tools.songs_tools import songs_tools
-from tools.playlists_tools import playlists_tools
-from tools.tags_tools import tags_tools
 from tools.categories_tools import categories_tools
+from tools.interaction_tools import interaction_tools
+from tools.playlists_tools import playlists_tools
+from tools.quotes_tools import quotes_tools
+from tools.songs_tools import songs_tools
+from tools.tags_tools import tags_tools
 from tools.timeline_tools import timeline_tools
 from tools.treehole_tools import treehole_tools
-from tools.quotes_tools import quotes_tools
-from tools.interaction_tools import interaction_tools
 
 logger = logging.getLogger(__name__)
 
@@ -28,27 +27,18 @@ all_tools = (
     + interaction_tools
 )
 
-llm = ChatOllama(
-    model=config.OLLAMA_CHAT_MODEL,
-    base_url=config.OLLAMA_BASE_URL,
-    temperature=0.7,
-)
+# 工具按业务域分组，用于生成更清晰的 System Prompt
+# 分组只影响提示词呈现，不改变工具的注册和调用逻辑
+TOOL_GROUPS = [
+    ("文章检索", article_tools),
+    ("音乐与歌单", songs_tools + playlists_tools),
+    ("标签与分类", tags_tools + categories_tools),
+    ("社区动态", timeline_tools + treehole_tools + quotes_tools),
+    ("用户互动（点赞/收藏，需登录）", interaction_tools),
+]
 
-SYSTEM_PROMPT = """你是一个友好、活泼的博客 AI 助手，可以用工具帮用户查文章、找音乐、看标签、刷歌单等。说话要自然亲切，像朋友聊天一样，可以加语气词和表情，让对话有温度。
-
-回答规则：
-1. 涉及博客内容（文章、歌曲、标签、歌单等）时，记得调用工具查数据库，不要凭记忆编造哦。
-2. 工具返回了数据就要完整列出来，别只说"找到了"却不告诉用户具体有哪些。
-3. 工具没找到结果就诚实说"暂时没有找到"，别自己编。
-4. 返回的 JSON 别直接贴，整理成自然的话说给用户听，关键信息（标题、名称等）要列全。
-5. 用户聊闲天、问通用知识、写代码之类的，不用调工具，直接聊就行。
-6. 信息不够就大方说"这个我也不太确定"，别硬编。"""
-
-agent_executor = create_agent(
-    model=llm,
-    tools=all_tools,
-    system_prompt=SYSTEM_PROMPT,
-)
+# 使用 ReAct Agent 替代原来的 create_agent
+react_agent = ReActAgent(tools=all_tools, tool_groups=TOOL_GROUPS)
 
 
 def _convert_history(messages: list[dict]) -> list[BaseMessage]:
@@ -64,47 +54,16 @@ def _convert_history(messages: list[dict]) -> list[BaseMessage]:
     return result
 
 
-def _extract_output(messages: list[BaseMessage]) -> str:
-    """从消息列表中提取最后一条 AI 回复内容"""
-    for msg in reversed(messages):
-        if isinstance(msg, AIMessage) and msg.content:
-            return msg.content
-    return "抱歉，我无法处理您的请求。"
-
-
-async def run_agent(
-    user_input: str,
-    chat_history: list[dict] = None,
-    token: str = "",
-) -> str:
-    """
-    运行 AI Agent 处理用户输入并返回回复
-
-    Args:
-        user_input: 用户输入内容
-        chat_history: 对话历史消息列表
-        token: 用户认证令牌
-
-    Returns:
-        AI 的回复内容
-
-    Raises:
-        Exception: Agent 执行失败时抛出
-    """
-    history_messages = _convert_history(chat_history or [])
-    messages = history_messages + [HumanMessage(content=user_input)]
-
-    result = await agent_executor.ainvoke({"messages": messages})
-    return _extract_output(result["messages"])
-
-
 async def run_agent_stream(
     user_input: str,
     chat_history: list[dict] = None,
     token: str = "",
 ):
     """
-    以流式方式运行 AI Agent，逐步返回回复内容
+    以流式方式运行 ReAct Agent，逐步返回回复内容
+
+    思考和工具调用阶段不输出，只在最终答案阶段流式输出，
+    保持与前端 SSE 接口的兼容。
 
     Args:
         user_input: 用户输入内容
@@ -118,17 +77,9 @@ async def run_agent_stream(
         Exception: Agent 执行失败时抛出
     """
     history_messages = _convert_history(chat_history or [])
-    messages = history_messages + [HumanMessage(content=user_input)]
-
-    async for event in agent_executor.astream_events(
-        {"messages": messages},
-        version="v2",
+    async for chunk in react_agent.run_stream(
+        user_input=user_input,
+        chat_history=history_messages,
+        token=token,
     ):
-        kind = event.get("event", "")
-        if kind == "on_chat_model_stream":
-            data = event.get("data", {})
-            # 确保 data 是 dict 类型
-            if isinstance(data, dict):
-                chunk = data.get("chunk")
-                if chunk and hasattr(chunk, "content") and chunk.content:
-                    yield chunk.content
+        yield chunk

@@ -1,6 +1,7 @@
-from langchain_core.tools import tool
-import httpx
 import json
+
+import httpx
+from langchain_core.tools import tool
 
 import config
 
@@ -10,7 +11,7 @@ JAVA_URL = config.JAVA_BACKEND_URL
 @tool
 async def get_hot_playlists() -> str:
     """获取热门歌单列表。当用户问"有什么歌单"、"热门歌单"时使用此工具。"""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.get(f"{JAVA_URL}/api/playlists", params={"mode": "normal"})
         data = resp.json()
         playlists = data.get("data") or {}.get("playlists", [])
@@ -20,14 +21,13 @@ async def get_hot_playlists() -> str:
         ]
         return json.dumps({
             "playlists": clean_data,
-            "note": "把歌单名称都列出来告诉用户，不要只说'有歌单'却不列哦。没有就如实说暂时没有。",
         }, ensure_ascii=False)
 
 
 @tool
 async def get_daily_playlists() -> str:
     """获取每日推荐歌单列表。当用户问"每日推荐歌单"、"今天推荐什么歌单"时使用此工具。"""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.get(f"{JAVA_URL}/api/playlists", params={"mode": "daily"})
         data = resp.json()
         playlists = data.get("data") or {}.get("playlists", [])
@@ -37,14 +37,13 @@ async def get_daily_playlists() -> str:
         ]
         return json.dumps({
             "playlists": clean_data,
-            "note": "把推荐歌单名称都列出来告诉用户，不要只说'有推荐'却不列哦。没有就如实说暂时没有。",
         }, ensure_ascii=False)
 
 
 @tool
 async def get_playlist_detail(playlist_id: str) -> str:
     """获取歌单详情和歌曲列表。当用户想查看某个歌单的具体内容时使用此工具，需要提供歌单 ID。"""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         info_resp = await client.get(f"{JAVA_URL}/api/playlists/{playlist_id}/info")
         songs_resp = await client.get(f"{JAVA_URL}/api/playlists/{playlist_id}/songs")
 
@@ -62,7 +61,6 @@ async def get_playlist_detail(playlist_id: str) -> str:
                 "description": info_data.get("description"),
             },
             "songs": clean_songs,
-            "note": "把歌单名称和歌曲都列出来，不要只说'有歌曲'却不列哦。歌单不存在就如实说。",
         }, ensure_ascii=False)
 
 

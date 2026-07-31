@@ -1,13 +1,23 @@
-from motor.motor_asyncio import AsyncIOMotorClient
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue, FilterSelector
-from services.embedding import embed_texts, get_embedding_vector_size
 import logging
 import re
 from typing import Optional
+
 from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorClient
+from qdrant_client import QdrantClient
+from qdrant_client.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    FilterSelector,
+    MatchValue,
+    PayloadSchemaType,
+    PointStruct,
+    VectorParams,
+)
 
 import config
+from services.embedding import embed_texts, get_embedding_vector_size
 
 logger = logging.getLogger(__name__)
 
@@ -254,7 +264,6 @@ async def init_rag_knowledge_base():
 
     # 创建 payload 索引以支持按 article_id 过滤
     try:
-        from qdrant_client.models import PayloadSchemaType
         qdrant_client.create_payload_index(
             collection_name=config.QDRANT_COLLECTION,
             field_name="article_id",

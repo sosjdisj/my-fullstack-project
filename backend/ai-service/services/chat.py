@@ -1,8 +1,9 @@
-from motor.motor_asyncio import AsyncIOMotorClient
-from bson import ObjectId
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
 from typing import Optional
+
+from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorClient
 
 import config
 
@@ -20,31 +21,31 @@ def _get_mongo_db():
     return mongo_client[db_name]
 
 
-async def get_conversations(userId: int) -> list[dict]:
+async def get_conversations(user_id: int) -> list[dict]:
     """
     获取用户的所有对话列表
 
     Args:
-        userId: 用户 ID
+        user_id: 用户 ID
 
     Returns:
         对话列表，按更新时间降序排列
     """
     db = _get_mongo_db()
     conversations = []
-    cursor = db.conversations.find({"userId": userId}).sort("updatedAt", -1)
+    cursor = db.conversations.find({"userId": user_id}).sort("updatedAt", -1)
     async for conv in cursor:
         conv["id"] = str(conv.pop("_id"))
         conversations.append(conv)
     return conversations
 
 
-async def create_conversation(userId: int, title: str = "新对话") -> dict:
+async def create_conversation(user_id: int, title: str = "新对话") -> dict:
     """
     创建新的对话
 
     Args:
-        userId: 用户 ID
+        user_id: 用户 ID
         title: 对话标题
 
     Returns:
@@ -53,7 +54,7 @@ async def create_conversation(userId: int, title: str = "新对话") -> dict:
     db = _get_mongo_db()
     now = datetime.now(timezone.utc)
     doc = {
-        "userId": userId,
+        "userId": user_id,
         "title": title,
         "createdAt": now,
         "updatedAt": now,
@@ -63,7 +64,7 @@ async def create_conversation(userId: int, title: str = "新对话") -> dict:
     return doc
 
 
-async def save_message(conversationId: str, role: str, content: str) -> dict:
+async def save_message(conversation_id: str, role: str, content: str) -> dict:
     """
     保存消息到数据库
 
@@ -78,18 +79,18 @@ async def save_message(conversationId: str, role: str, content: str) -> dict:
     db = _get_mongo_db()
     now = datetime.now(timezone.utc)
     doc = {
-        "conversationId": ObjectId(conversationId),
+        "conversationId": ObjectId(conversation_id),
         "role": role,
         "content": content,
         "createdAt": now,
     }
     result = await db.ai_messages.insert_one(doc)
     doc["id"] = str(result.inserted_id)
-    doc["conversationId"] = conversationId
+    doc["conversationId"] = conversation_id
 
     try:
         await db.conversations.update_one(
-            {"_id": ObjectId(conversationId)},
+            {"_id": ObjectId(conversation_id)},
             {"$set": {"updatedAt": now}},
         )
     except Exception as e:
@@ -99,13 +100,13 @@ async def save_message(conversationId: str, role: str, content: str) -> dict:
 
 
 async def get_history_messages(
-    conversationId: str, limit: int = 20
+    conversation_id: str, limit: int = 20
 ) -> list[dict]:
     """
     获取对话的历史消息
 
     Args:
-        conversationId: 对话 ID
+        conversation_id: 对话 ID
         limit: 返回的消息数量限制
 
     Returns:
@@ -114,7 +115,7 @@ async def get_history_messages(
     db = _get_mongo_db()
     messages = []
     cursor = db.ai_messages.find(
-        {"conversationId": ObjectId(conversationId)}
+        {"conversationId": ObjectId(conversation_id)}
     ).sort("createdAt", -1).limit(limit)
 
     async for msg in cursor:
@@ -127,13 +128,13 @@ async def get_history_messages(
 
 
 async def get_chat_history(
-    conversationId: str, size: int = 20, cursor: Optional[str] = None
+    conversation_id: str, size: int = 20, cursor: Optional[str] = None
 ) -> dict:
     """
     获取对话历史消息（支持分页）
 
     Args:
-        conversationId: 对话 ID
+        conversation_id: 对话 ID
         size: 每页消息数量
         cursor: 分页游标（消息 ID）
 
@@ -142,7 +143,7 @@ async def get_chat_history(
     """
     db = _get_mongo_db()
 
-    query = {"conversationId": ObjectId(conversationId)}
+    query = {"conversationId": ObjectId(conversation_id)}
     if cursor:
         try:
             cursor_time = await db.ai_messages.find_one({"_id": ObjectId(cursor)})

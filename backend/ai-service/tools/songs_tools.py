@@ -1,6 +1,7 @@
-from langchain_core.tools import tool
-import httpx
 import json
+
+import httpx
+from langchain_core.tools import tool
 
 import config
 
@@ -13,7 +14,7 @@ async def get_music_charts(tag_names: str = "") -> str:
     params = {}
     if tag_names:
         params["tagNames"] = tag_names
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.get(f"{JAVA_URL}/api/songs/charts", params=params)
         data = resp.json()
         songs = data.get("data") or {}.get("songs", [])
@@ -23,7 +24,6 @@ async def get_music_charts(tag_names: str = "") -> str:
         ]
         return json.dumps({
             "songs": clean_data,
-            "note": "把歌曲名称和歌手都列出来告诉用户，不要只说'找到了'却不列哦。没找到就如实说没有。",
         }, ensure_ascii=False)
 
 
@@ -33,7 +33,7 @@ async def get_user_liked_songs(token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.get(f"{JAVA_URL}/api/songs", headers=headers)
         data = resp.json()
         songs = data.get("data") or {}.get("songs", [])
@@ -43,7 +43,6 @@ async def get_user_liked_songs(token: str = "") -> str:
         ]
         return json.dumps({
             "liked_songs": clean_data,
-            "note": "把喜欢的歌曲名称和歌手都列出来，不要只说'你喜欢的歌'却不列哦。没有就如实说还没有喜欢的歌。",
         }, ensure_ascii=False)
 
 

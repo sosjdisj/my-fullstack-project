@@ -65,7 +65,7 @@
     import BackToTopTrigger from '@/components/ui/BackToTopTrigger.vue';
     import InfiniteScrollContainer from '@/components/business/InfiniteScrollContainer.vue';
     import GradientText from '@/components/ui/gradient-text/GradientText.vue'
-    import imgUrl from '@/assets/1.png'
+    import imgUrl from '@/assets/1.jpg'
 
     // 非首屏关键组件：异步加载，避免阻塞首屏渲染
     const Animation = defineAsyncComponent(() => import('@/components/business/home/ArticleList/Animation.vue'))

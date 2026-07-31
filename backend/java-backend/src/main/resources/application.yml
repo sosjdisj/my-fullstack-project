@@ -2,6 +2,8 @@ server:
   port: 3001
 
 spring:
+  profiles:
+    active: local
   application:
     name: blog-backend
   mvc:
@@ -11,7 +13,7 @@ spring:
   # MongoDB 配置
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/myblog}
+      uri: mongodb://localhost:27017/myblog
       auto-index-creation: true
 
     # Redis 配置
@@ -22,11 +24,11 @@ spring:
       database: 0
       timeout: 5000ms
 
-  # MySQL 配置
+  # MySQL 配置（敏感信息请使用 application-local.yml）
   datasource:
     url: jdbc:mysql://localhost:3306/myblog?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: ${MYSQL_PASSWORD:}
+    password:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 # MyBatis-Plus 配置
@@ -54,7 +56,7 @@ mybatis-plus:
 
 # JWT 配置
 jwt:
-  secret: ${JWT_SECRET:}
+  secret:
   access-token-expiration: 7200000    # 2小时（毫秒）
   refresh-token-expiration: 604800000  # 7天（毫秒）
 
@@ -70,8 +72,8 @@ upload:
 # 阿里云短信配置
 aliyun:
   sms:
-    access-key-id: ${ALIYUN_ACCESS_KEY_ID:}
-    access-key-secret: ${ALIYUN_ACCESS_KEY_SECRET:}
+    access-key-id:
+    access-key-secret:
     sign-name: 个人博客验证码
     template-code: SMS_332535108
 

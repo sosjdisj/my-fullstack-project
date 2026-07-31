@@ -1,5 +1,10 @@
 import os
 
+from dotenv import load_dotenv
+
+# 加载 .env 文件
+load_dotenv()
+
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_CHAT_MODEL = os.getenv("OLLAMA_CHAT_MODEL", "qwen3:8b")
 OLLAMA_EMBEDDING_MODEL = os.getenv("OLLAMA_EMBEDDING_MODEL", "embeddinggemma:300m")
@@ -20,3 +25,6 @@ RAG_CACHE_TTL = int(os.getenv("RAG_CACHE_TTL", "3600"))  # 1 hour
 
 CHUNK_WINDOW_SIZE = int(os.getenv("CHUNK_WINDOW_SIZE", "512"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "50"))
+
+# 工具调用 Java 后端的 HTTP 超时（秒），防止后端卡住拖垮整个 Agent
+HTTP_TIMEOUT = float(os.getenv("HTTP_TIMEOUT", "10.0"))

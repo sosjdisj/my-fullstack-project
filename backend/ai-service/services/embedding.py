@@ -1,8 +1,9 @@
+import hashlib
+import json
+import logging
+
 from langchain_ollama import OllamaEmbeddings
 from redis import Redis
-import json
-import hashlib
-import logging
 
 import config
 

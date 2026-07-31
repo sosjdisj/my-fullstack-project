@@ -1,5 +1,6 @@
-from sentence_transformers import CrossEncoder
 import logging
+
+from sentence_transformers import CrossEncoder
 
 import config
 

@@ -1,11 +1,12 @@
-from qdrant_client import QdrantClient
-from qdrant_client.models import Filter, FieldCondition, MatchValue
-from redis import Redis
-from motor.motor_asyncio import AsyncIOMotorClient
-import json
 import hashlib
+import json
 import logging
 from typing import Optional
+
+from motor.motor_asyncio import AsyncIOMotorClient
+from qdrant_client import QdrantClient
+from qdrant_client.models import FieldCondition, Filter, MatchValue
+from redis import Redis
 
 import config
 from services.embedding import embed_text
@@ -18,7 +19,7 @@ qdrant_client = QdrantClient(
     url=config.QDRANT_URL,
     api_key=config.QDRANT_API_KEY,
     check_compatibility=False,
-    )
+)
 
 mongo_client: Optional[AsyncIOMotorClient] = None
 
@@ -58,7 +59,10 @@ async def retrieve_relevant_chunks(
         if cached:
             cached_result = json.loads(cached)
             # 校验缓存格式：应为 list[dict]，每个 item 含 "chunk" 键
-            if isinstance(cached_result, list) and all(isinstance(item, dict) and "chunk" in item for item in cached_result):
+            if isinstance(cached_result, list) and all(
+                isinstance(item, dict) and "chunk" in item
+                for item in cached_result
+            ):
                 return cached_result
             else:
                 logger.warning("RAG cache format invalid, skipping cache")
@@ -71,7 +75,7 @@ async def retrieve_relevant_chunks(
         collection_name=config.QDRANT_COLLECTION,
         query=query_vector,
         limit=top_k * 3,
-        score_threshold=threshold,
+        score_threshold=threshold, #过滤
     ).points
 
     if not search_results:

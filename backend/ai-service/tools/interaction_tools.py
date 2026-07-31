@@ -1,6 +1,7 @@
-﻿from langchain_core.tools import tool
-import httpx
 import json
+
+import httpx
+from langchain_core.tools import tool
 
 import config
 
@@ -13,7 +14,7 @@ async def like_article(article_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.post(
             f"{JAVA_URL}/api/article/likes",
             json={"articleId": article_id},
@@ -32,7 +33,7 @@ async def unlike_article(article_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.delete(
             f"{JAVA_URL}/api/article/likes/{article_id}",
             headers=headers,
@@ -50,7 +51,7 @@ async def collect_article(article_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.post(
             f"{JAVA_URL}/api/article/collects",
             json={"articleId": article_id},
@@ -69,7 +70,7 @@ async def uncollect_article(article_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.delete(
             f"{JAVA_URL}/api/article/collects/{article_id}",
             headers=headers,
@@ -87,17 +88,17 @@ async def get_article_like_status(article_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
+        # 通过文章详情接口获取点赞状态（详情接口返回 isLiked 字段）
         resp = await client.get(
-            f"{JAVA_URL}/api/search",
-            params={"keyword": article_id},
+            f"{JAVA_URL}/api/article/{article_id}",
             headers=headers,
         )
         data = resp.json()
-        is_liked = data.get("data") or {}.get("isLiked", False)
+        article_data = data.get("data") or {}
         return json.dumps({
             "article_id": article_id,
-            "is_liked": is_liked,
+            "is_liked": article_data.get("isLiked", False),
         }, ensure_ascii=False)
 
 
@@ -107,17 +108,17 @@ async def get_article_collect_status(article_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
+        # 通过文章详情接口获取收藏状态（详情接口返回 isCollected 字段）
         resp = await client.get(
-            f"{JAVA_URL}/api/search",
-            params={"keyword": article_id},
+            f"{JAVA_URL}/api/article/{article_id}",
             headers=headers,
         )
         data = resp.json()
-        is_collected = data.get("data") or {}.get("isCollected", False)
+        article_data = data.get("data") or {}
         return json.dumps({
             "article_id": article_id,
-            "is_collected": is_collected,
+            "is_collected": article_data.get("isCollected", False),
         }, ensure_ascii=False)
 
 
@@ -127,7 +128,7 @@ async def like_song(song_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.post(
             f"{JAVA_URL}/api/songs/likes",
             json={"songId": song_id},
@@ -146,7 +147,7 @@ async def unlike_song(song_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.delete(
             f"{JAVA_URL}/api/songs/{song_id}/likes",
             headers=headers,
@@ -164,10 +165,15 @@ async def get_song_like_status(song_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{JAVA_URL}/api/songs", headers=headers)
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
+        resp = await client.get(
+            f"{JAVA_URL}/api/songs",
+            params={"page": 1, "size": 200},
+            headers=headers,
+        )
         data = resp.json()
-        liked_songs = data.get("data") or {}.get("songs", [])
+        result = data.get("data") or {}
+        liked_songs = result.get("list", [])
         is_liked = any(str(s.get("id")) == song_id for s in liked_songs)
         return json.dumps({
             "song_id": song_id,
@@ -181,7 +187,7 @@ async def collect_playlist(playlist_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.post(
             f"{JAVA_URL}/api/playlists/collects",
             json={"playlistId": playlist_id},
@@ -200,7 +206,7 @@ async def uncollect_playlist(playlist_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.delete(
             f"{JAVA_URL}/api/playlists/{playlist_id}/collects",
             headers=headers,
@@ -218,7 +224,7 @@ async def get_playlist_collect_status(playlist_id: str, token: str = "") -> str:
     headers = {}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.get(
             f"{JAVA_URL}/api/playlists/{playlist_id}/info",
             headers=headers,
