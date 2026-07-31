@@ -103,7 +103,7 @@
                         </el-icon>
                     </button>
                 </div>
-                <p class="hint">基于 Gemini 3 Flash 构建的个人博客助手</p>
+                <p class="hint">个人博客助手</p>
             </div>
         </main>
     </div>

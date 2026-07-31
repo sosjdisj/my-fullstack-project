@@ -108,7 +108,3 @@ public/uploads/
 
 # Local Netlify folder
 .netlify
-
-.auto-imports.d.ts
-.components.d.ts
-.public/mockServiceWorker.js
