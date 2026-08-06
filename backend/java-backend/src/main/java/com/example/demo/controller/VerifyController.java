@@ -14,6 +14,7 @@ import java.util.Map;
 @RequestMapping("/api/verify")
 public class VerifyController {
 
+    /** 校验访问令牌是否有效，并返回当前用户信息 */
     @GetMapping
     public ApiResponse<Map<String, Object>> verify(HttpServletRequest request) {
         JwtUtil.UserInfo auth = (JwtUtil.UserInfo) request.getAttribute("auth");

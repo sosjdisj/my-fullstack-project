@@ -61,12 +61,15 @@ public class ChatController {
         return ApiResponse.success("创建对话成功", conversation);
     }
 
+    /** 按游标分页获取指定对话的聊天记录 */
     @GetMapping("/{id}/history")
     public ApiResponse<Map<String, Object>> getChatHistory(
             @PathVariable String id,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) LocalDateTime cursor) {
-        List<AiMessage> messages = chatService.getChatHistory(id, size, cursor);
+            @RequestParam(required = false) LocalDateTime cursor,
+            HttpServletRequest request) {
+        JwtUtil.UserInfo auth = getAuth(request);
+        List<AiMessage> messages = chatService.getChatHistory(id, size, cursor, auth.getUserId());
 
         // 构建下一页游标
         LocalDateTime nextCursor = null;
@@ -80,10 +83,7 @@ public class ChatController {
         return ApiResponse.success("获取聊天记录成功", result);
     }
 
-    /**
-     * 发送消息并获取AI回复（SSE 流式）
-     * 调用 Python AI 服务的 SSE 端点获取流式回复
-     */
+    /** 发送消息并以 SSE 流式返回 AI 回复 */
     @PostMapping(value = "/{id}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter sendMessage(
             @PathVariable String id,
@@ -97,14 +97,10 @@ public class ChatController {
 
         JwtUtil.UserInfo auth = getAuth(request);
 
-        SseEmitter emitter = new SseEmitter(120_000L);
+        // 校验会话归属，防止向他人会话发送消息
+        chatService.assertConversationOwnedByUser(id, auth.getUserId());
 
-        // 获取 token
-        String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7);
-        }
-        String finalToken = token != null ? token : "";
+        SseEmitter emitter = new SseEmitter(120_000L);
 
         CompletableFuture.runAsync(() -> {
             try {
@@ -113,8 +109,7 @@ public class ChatController {
                 String requestBody = new ObjectMapper().writeValueAsString(Map.of(
                     "conversation_id", id,
                     "message", message,
-                    "user_id", auth.getUserId(),
-                    "token", finalToken
+                    "user_id", auth.getUserId()
                 ));
 
                 HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -182,6 +177,7 @@ public class ChatController {
         return emitter;
     }
 
+    /** 从请求中获取登录用户信息，未登录则抛出异常 */
     private JwtUtil.UserInfo getAuth(HttpServletRequest request) {
         JwtUtil.UserInfo auth = (JwtUtil.UserInfo) request.getAttribute("auth");
         if (auth == null) {

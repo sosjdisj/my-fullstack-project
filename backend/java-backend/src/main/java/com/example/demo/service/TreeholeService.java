@@ -24,6 +24,7 @@ public class TreeholeService {
     @Autowired
     private UserMapper userMapper;
 
+    /** 获取最新的树洞消息列表，附带用户头像 */
     public List<Map<String, Object>> getMessage(int limit) {
         PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createTime"));
         List<Treehole> messages = treeholeRepository.findByDeletedNotAndReviewStatusOrderByCreateTimeDesc(true, "APPROVED", pageRequest);
@@ -52,6 +53,7 @@ public class TreeholeService {
         return result;
     }
 
+    /** 校验用户10秒内是否发过消息，防止刷屏 */
     public void checkRecentMessage(Integer userId) {
         LocalDateTime tenSecondsAgo = LocalDateTime.now().minusSeconds(10);
         boolean recent = treeholeRepository.existsByUserIdAndCreateTimeAfterAndDeletedNotAndReviewStatus(
@@ -61,6 +63,7 @@ public class TreeholeService {
         }
     }
 
+    /** 创建树洞消息，校验频率后保存为待审核状态 */
     public void createMessage(String content, Integer userId) {
         checkRecentMessage(userId);
 
@@ -73,6 +76,7 @@ public class TreeholeService {
         treeholeRepository.save(message);
     }
 
+    /** 批量根据用户ID查询用户信息映射 */
     private Map<Integer, User> resolveUsers(Set<Integer> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyMap();

@@ -16,6 +16,7 @@ public class TimelineService {
     @Autowired
     private ArticleRepository articleRepository;
 
+    /** 分页查询文章时间线列表，按创建时间倒序 */
     public Map<String, Object> getTimelineList(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Article> articlePage = articleRepository.findByDeletedNotAndStatus(true, "PUBLIC", pageRequest);

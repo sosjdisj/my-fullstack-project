@@ -22,6 +22,7 @@ public class CategoriesController {
         return ApiResponse.success("获取分类列表成功", result);
     }
 
+    /** 按分类分页获取文章列表 */
     @GetMapping("/{content}")
     public ApiResponse<Map<String, Object>> getArticlesByCategory(
             @PathVariable String content,

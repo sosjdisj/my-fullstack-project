@@ -18,6 +18,7 @@ public class TreeholeController {
     @Autowired
     private TreeholeService treeholeService;
 
+    /** 获取最新的树洞消息列表 */
     @GetMapping
     public ApiResponse<List<Map<String, Object>>> getMessages(
             @RequestParam(defaultValue = "10") int limit) {
@@ -25,6 +26,7 @@ public class TreeholeController {
         return ApiResponse.success("获取树洞消息成功", messages);
     }
 
+    /** 发送一条树洞消息 */
     @PostMapping
     public ApiResponse<Void> createMessage(@RequestBody Map<String, String> body, HttpServletRequest request) {
         JwtUtil.UserInfo auth = (JwtUtil.UserInfo) request.getAttribute("auth");

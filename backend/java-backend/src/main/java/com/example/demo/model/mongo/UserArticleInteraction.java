@@ -1,6 +1,7 @@
 package com.example.demo.model.mongo;
 
 import lombok.Data;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
@@ -14,7 +15,8 @@ public class UserArticleInteraction {
     private String id;
 
     private Integer userId;
-    private String articleId;
+    // articleId 字段类型为 ObjectId，与 Article._id 类型保持一致，避免 MongoDB 类型不匹配
+    private ObjectId articleId;
     private Boolean isLiked;
     private Boolean isCollected;
 }

@@ -37,6 +37,7 @@ public class CategoriesService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    /** 分页查询分类列表，并统计每个分类下的文章数 */
     public Map<String, Object> getCategoriesList(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
         Page<Categories> categoriesPage = categoriesRepository.findByDeletedNotAndStatus(true, "ACTIVE", pageRequest);
@@ -79,6 +80,7 @@ public class CategoriesService {
         return result;
     }
 
+    /** 根据分类名分页查询该分类下的文章列表 */
     public Map<String, Object> getArticlesByCategory(String name, int page, int size) {
         Categories category = categoriesRepository.findByNameAndDeletedNotAndStatus(name, true, "ACTIVE")
                 .orElseThrow(() -> new BusinessException(404, "分类不存在"));
@@ -119,6 +121,7 @@ public class CategoriesService {
         return result;
     }
 
+    /** 批量根据标签ID查询标签名映射 */
     private Map<String, String> resolveTagNames(Set<String> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) {
             return Collections.emptyMap();

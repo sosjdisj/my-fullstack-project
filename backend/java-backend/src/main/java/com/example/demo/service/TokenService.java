@@ -24,6 +24,7 @@ public class TokenService {
         this.objectMapper = objectMapper;
     }
 
+    /** 将用户Token和基础信息缓存到Redis，2小时过期 */
     public void saveTokenToRedis(Integer userId, String accessToken, Object userInfo) {
         try {
             TokenCacheData cacheData = new TokenCacheData();
@@ -47,6 +48,7 @@ public class TokenService {
         }
     }
 
+    /** 从Redis获取用户Token信息，过期则删除并返回null */
     public TokenCacheData getTokenFromRedis(Integer userId) {
         try {
             String key = TOKEN_KEY_PREFIX + userId;
@@ -71,6 +73,7 @@ public class TokenService {
         }
     }
 
+    /** 从Redis删除指定用户的Token缓存 */
     public void deleteTokenFromRedis(Integer userId) {
         String key = TOKEN_KEY_PREFIX + userId;
         redisTemplate.delete(key);

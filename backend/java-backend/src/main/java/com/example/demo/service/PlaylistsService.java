@@ -9,6 +9,7 @@ import com.example.demo.repository.mongo.PlaylistsRepository;
 import com.example.demo.repository.mongo.SongsRepository;
 import com.example.demo.repository.mongo.UserCollectPlaylistsRepository;
 import com.example.demo.repository.mongo.UserLikeSongsRepository;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +42,7 @@ public class PlaylistsService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    /** 获取按播放量倒序的热门歌单列表 */
     public Map<String, Object> getPlaylist(int limit) {
         PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "playCount"));
         Page<Playlists> playlistPage = playlistsRepository.findByDeletedNotOrderByPlayCountDesc(true, pageRequest);
@@ -54,6 +56,7 @@ public class PlaylistsService {
         return result;
     }
 
+    /** 随机获取若干个歌单作为每日推荐 */
     public Map<String, Object> getDailyPlaylist() {
         List<Playlists> playlists = playlistsRepository.findRandomPlaylists(10);
 
@@ -66,11 +69,12 @@ public class PlaylistsService {
         return result;
     }
 
+    /** 获取歌单详情，包含歌曲数和用户收藏状态 */
     public Map<String, Object> getPlaylistCover(String playlistId, Integer userId) {
         Playlists playlist = playlistsRepository.findByIdAndDeletedNot(playlistId, true)
                 .orElseThrow(() -> new BusinessException(404, "歌单不存在"));
 
-        long songCount = songsRepository.countByPlaylistId(playlistId);
+        long songCount = songsRepository.countByPlaylistId(new ObjectId(playlistId));
 
         Map<String, Object> result = playlistToMap(playlist);
         result.put("songCount", songCount);
@@ -84,16 +88,18 @@ public class PlaylistsService {
         return result;
     }
 
+    /** 查询用户是否已收藏该歌单 */
     public boolean getUserCollectStatus(String playlistId, Integer userId) {
-        return userCollectPlaylistsRepository.findByPlaylistIdAndUserId(playlistId, userId)
+        return userCollectPlaylistsRepository.findByPlaylistIdAndUserId(new ObjectId(playlistId), userId)
                 .map(UserCollectPlaylists::getIsCanceled)
                 .orElse(false);
     }
 
+    /** 分页获取歌单下的歌曲列表，附带用户点赞状态 */
     public Map<String, Object> getPlaylistSongs(String playlistId, int page, int size, Integer userId) {
         PageRequest pageRequest = PageRequest.of(page - 1, size);
-        Page<Songs> songPage = songsRepository.findByPlaylistId(playlistId, pageRequest);
-
+        Page<Songs> songPage = songsRepository.findByPlaylistId(new ObjectId(playlistId), pageRequest);
+        
         List<Map<String, Object>> songList = new ArrayList<>();
         List<String> songIds = songPage.getContent().stream()
                 .map(Songs::getId)
@@ -119,23 +125,28 @@ public class PlaylistsService {
         return result;
     }
 
+    /** 查询用户在指定歌曲中已点赞的歌曲ID集合 */
     public Set<String> getUserLikedSongIds(Integer userId, List<String> songIds) {
-        List<UserLikeSongs> userLikeSongs = userLikeSongsRepository.findByUserIdAndSongIdIn(userId, songIds);
+        List<ObjectId> objectIdSongIds = songIds.stream().map(ObjectId::new).collect(Collectors.toList());
+        List<UserLikeSongs> userLikeSongs = userLikeSongsRepository.findByUserIdAndSongIdIn(userId, objectIdSongIds);
         return userLikeSongs.stream()
                 .filter(uls -> Boolean.TRUE.equals(uls.getIsLiked()))
                 .map(UserLikeSongs::getSongId)
+                .map(ObjectId::toString)
                 .collect(Collectors.toSet());
     }
 
+    /** 用户收藏歌单，更新收藏数并返回最新收藏数 */
     @Transactional
     public Map<String, Object> collectPlaylist(Integer userId, String playlistId) {
         UserCollectPlaylists collect = userCollectPlaylistsRepository
-                .findByPlaylistIdAndUserId(playlistId, userId)
+                .findByPlaylistIdAndUserId(new ObjectId(playlistId), userId)
                 .orElseGet(() -> {
                     UserCollectPlaylists newCollect = new UserCollectPlaylists();
                     newCollect.setUserId(userId);
-                    newCollect.setPlaylistId(playlistId);
-                    newCollect.setIsCanceled(true);
+                    // 新增时 playlistId 需转换为 ObjectId 类型存储，与查询类型保持一致
+                    newCollect.setPlaylistId(new ObjectId(playlistId));
+                    newCollect.setIsCanceled(false);
                     return newCollect;
                 });
 
@@ -149,7 +160,7 @@ public class PlaylistsService {
         userCollectPlaylistsRepository.save(collect);
 
         // 增加歌单收藏数
-        Query query = new Query(Criteria.where("_id").is(playlistId));
+        Query query = new Query(Criteria.where("_id").is(new ObjectId(playlistId)));
         Update update = new Update().inc("collects", 1);
         mongoTemplate.updateFirst(query, update, Playlists.class);
 
@@ -161,10 +172,11 @@ public class PlaylistsService {
         return result;
     }
 
+    /** 用户取消收藏歌单，更新收藏数并返回最新收藏数 */
     @Transactional
     public Map<String, Object> uncollectPlaylist(Integer userId, String playlistId) {
         UserCollectPlaylists collect = userCollectPlaylistsRepository
-                .findByPlaylistIdAndUserId(playlistId, userId)
+                .findByPlaylistIdAndUserId(new ObjectId(playlistId), userId)
                 .orElseThrow(() -> new BusinessException(400, "未收藏过该歌单"));
 
         // 复刻原始Node.js代码的bug：检查isCanceled，逻辑看似反转
@@ -177,7 +189,7 @@ public class PlaylistsService {
         userCollectPlaylistsRepository.save(collect);
 
         // 减少歌单收藏数
-        Query query = new Query(Criteria.where("_id").is(playlistId));
+        Query query = new Query(Criteria.where("_id").is(new ObjectId(playlistId)));
         Update update = new Update().inc("collects", -1);
         mongoTemplate.updateFirst(query, update, Playlists.class);
 
@@ -189,6 +201,7 @@ public class PlaylistsService {
         return result;
     }
 
+    /** 分页查询用户已收藏的歌单列表 */
     public Map<String, Object> getCollectsPlaylist(Integer userId, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size);
         // isCanceled=true 表示已收藏（复刻原始代码的逻辑反转）
@@ -197,6 +210,7 @@ public class PlaylistsService {
 
         List<String> playlistIds = collectPage.getContent().stream()
                 .map(UserCollectPlaylists::getPlaylistId)
+                .map(ObjectId::toString)
                 .collect(Collectors.toList());
 
         List<Playlists> playlists = playlistIds.isEmpty()
@@ -215,6 +229,7 @@ public class PlaylistsService {
         return result;
     }
 
+    /** 将歌单对象转为前端需要的Map结构 */
     private Map<String, Object> playlistToMap(Playlists playlist) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", playlist.getId());
@@ -231,12 +246,14 @@ public class PlaylistsService {
         return map;
     }
 
+    /** 将歌曲对象转为前端需要的Map结构 */
     private Map<String, Object> songToMap(Songs song) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", song.getId());
         map.put("name", song.getName());
         map.put("singer", song.getSinger());
         map.put("cover", song.getCover());
+        map.put("path", song.getPath());
         map.put("duration", song.getDuration());
         map.put("playback", song.getPlayback());
         map.put("playlistId", song.getPlaylistId());

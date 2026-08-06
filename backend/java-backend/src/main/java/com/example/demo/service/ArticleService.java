@@ -55,6 +55,7 @@ public class ArticleService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    /** 分页查询已发布文章列表，附带分类、标签、作者信息 */
     public Map<String, Object> getArticleList(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "published"));
         Page<Article> articlePage = articleRepository.findByDeletedNotAndStatus(true, "PUBLIC", pageRequest);
@@ -108,6 +109,7 @@ public class ArticleService {
         return result;
     }
 
+    /** 根据文章ID查询文章详情，包含上下篇、评论数及用户点赞收藏状态 */
     public Map<String, Object> getArticleById(String id, Integer userId) {
         Article article = articleRepository.findByIdAndDeletedNot(id, true)
                 .orElseThrow(() -> new BusinessException(404, "文章不存在"));
@@ -122,7 +124,7 @@ public class ArticleService {
         result.put("tag", resolveTagNames(Set.of(article.getTag())).getOrDefault(article.getTag(), ""));
 
         // 评论数
-        result.put("comments", commentsRepository.countByArticleId(id));
+        result.put("comments", commentsRepository.countByArticleId(new ObjectId(id)));
 
         // 作者信息
         if (article.getAuthor() != null) {
@@ -149,30 +151,35 @@ public class ArticleService {
         return result;
     }
 
+    /** 随机获取若干篇文章 */
     public List<Article> getRandomArticles() {
         return articleRepository.findRandomArticles(3);
     }
 
+    /** 查询用户是否已点赞该文章 */
     public boolean getArticleLikeStatus(String articleId, Integer userId) {
-        return interactionRepository.findByArticleIdAndUserId(articleId, userId)
+        return interactionRepository.findByArticleIdAndUserId(new ObjectId(articleId), userId)
                 .map(UserArticleInteraction::getIsLiked)
                 .orElse(false);
     }
 
+    /** 查询用户是否已收藏该文章 */
     public boolean getArticleCollectStatus(String articleId, Integer userId) {
-        return interactionRepository.findByArticleIdAndUserId(articleId, userId)
+        return interactionRepository.findByArticleIdAndUserId(new ObjectId(articleId), userId)
                 .map(UserArticleInteraction::getIsCollected)
                 .orElse(false);
     }
 
+    /** 用户点赞文章，原子更新点赞数并返回最新点赞数 */
     @Transactional
     public long likeArticle(String articleId, Integer userId) {
         UserArticleInteraction interaction = interactionRepository
-                .findByArticleIdAndUserId(articleId, userId)
+                .findByArticleIdAndUserId(new ObjectId(articleId), userId)
                 .orElseGet(() -> {
                     UserArticleInteraction newInteraction = new UserArticleInteraction();
-                    newInteraction.setArticleId(articleId);
                     newInteraction.setUserId(userId);
+                    // 新增时 articleId 需转换为 ObjectId 类型存储，与查询类型保持一致
+                    newInteraction.setArticleId(new ObjectId(articleId));
                     newInteraction.setIsLiked(false);
                     newInteraction.setIsCollected(false);
                     return newInteraction;
@@ -186,7 +193,7 @@ public class ArticleService {
         interactionRepository.save(interaction);
 
         // 更新文章点赞数
-        Query query = new Query(Criteria.where("_id").is(articleId));
+        Query query = new Query(Criteria.where("_id").is(new ObjectId(articleId)));
         Update update = new Update().inc("likes", 1);
         mongoTemplate.updateFirst(query, update, Article.class);
 
@@ -194,10 +201,11 @@ public class ArticleService {
         return article != null ? article.getLikes() : 0;
     }
 
+    /** 用户取消点赞文章，原子更新点赞数并返回最新点赞数 */
     @Transactional
     public long unlikeArticle(String articleId, Integer userId) {
         UserArticleInteraction interaction = interactionRepository
-                .findByArticleIdAndUserId(articleId, userId)
+                .findByArticleIdAndUserId(new ObjectId(articleId), userId)
                 .orElseThrow(() -> new BusinessException(400, "未点赞过该文章"));
 
         if (!Boolean.TRUE.equals(interaction.getIsLiked())) {
@@ -208,7 +216,7 @@ public class ArticleService {
         interactionRepository.save(interaction);
 
         // 更新文章点赞数
-        Query query = new Query(Criteria.where("_id").is(articleId));
+        Query query = new Query(Criteria.where("_id").is(new ObjectId(articleId)));
         Update update = new Update().inc("likes", -1);
         mongoTemplate.updateFirst(query, update, Article.class);
 
@@ -216,14 +224,16 @@ public class ArticleService {
         return article != null ? article.getLikes() : 0;
     }
 
+    /** 用户收藏文章，原子更新收藏数并返回最新收藏数 */
     @Transactional
     public long collectArticle(String articleId, Integer userId) {
         UserArticleInteraction interaction = interactionRepository
-                .findByArticleIdAndUserId(articleId, userId)
+                .findByArticleIdAndUserId(new ObjectId(articleId), userId)
                 .orElseGet(() -> {
                     UserArticleInteraction newInteraction = new UserArticleInteraction();
-                    newInteraction.setArticleId(articleId);
                     newInteraction.setUserId(userId);
+                    // 新增时 articleId 需转换为 ObjectId 类型存储，与查询类型保持一致
+                    newInteraction.setArticleId(new ObjectId(articleId));
                     newInteraction.setIsLiked(false);
                     newInteraction.setIsCollected(false);
                     return newInteraction;
@@ -237,7 +247,7 @@ public class ArticleService {
         interactionRepository.save(interaction);
 
         // 更新文章收藏数
-        Query query = new Query(Criteria.where("_id").is(articleId));
+        Query query = new Query(Criteria.where("_id").is(new ObjectId(articleId)));
         Update update = new Update().inc("collects", 1);
         mongoTemplate.updateFirst(query, update, Article.class);
 
@@ -245,10 +255,11 @@ public class ArticleService {
         return article != null ? article.getCollects() : 0;
     }
 
+    /** 用户取消收藏文章，原子更新收藏数并返回最新收藏数 */
     @Transactional
     public long uncollectArticle(String articleId, Integer userId) {
         UserArticleInteraction interaction = interactionRepository
-                .findByArticleIdAndUserId(articleId, userId)
+                .findByArticleIdAndUserId(new ObjectId(articleId), userId)
                 .orElseThrow(() -> new BusinessException(400, "未收藏过该文章"));
 
         if (!Boolean.TRUE.equals(interaction.getIsCollected())) {
@@ -259,7 +270,7 @@ public class ArticleService {
         interactionRepository.save(interaction);
 
         // 更新文章收藏数
-        Query query = new Query(Criteria.where("_id").is(articleId));
+        Query query = new Query(Criteria.where("_id").is(new ObjectId(articleId)));
         Update update = new Update().inc("collects", -1);
         mongoTemplate.updateFirst(query, update, Article.class);
 
@@ -267,6 +278,7 @@ public class ArticleService {
         return article != null ? article.getCollects() : 0;
     }
 
+    /** 分页查询文章的评论列表，附带评论者信息 */
     public Map<String, Object> getArticleComments(String articleId, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
 
@@ -299,11 +311,13 @@ public class ArticleService {
         return result;
     }
 
+    /** 创建文章评论，校验频率后保存并返回评论总数 */
     public long createArticleComment(String articleId, String content, Integer userId) {
         checkRecentMessage(userId);
 
         Comments comment = new Comments();
-        comment.setArticleId(articleId);
+        // 新增评论时 articleId 需转换为 ObjectId 类型存储，与查询类型保持一致
+        comment.setArticleId(new ObjectId(articleId));
         comment.setContent(content);
         comment.setUserId(userId);
         comment.setCreateTime(LocalDateTime.now());
@@ -311,9 +325,10 @@ public class ArticleService {
         comment.setDeleted(false);
         commentsRepository.save(comment);
 
-        return commentsRepository.countByArticleId(articleId);
+        return commentsRepository.countByArticleId(new ObjectId(articleId));
     }
 
+    /** 校验用户1分钟内是否评论过，防止刷屏 */
     public void checkRecentMessage(Integer userId) {
         LocalDateTime oneMinuteAgo = LocalDateTime.now().minusMinutes(1);
         boolean recent = commentsRepository.existsByUserIdAndCreateTimeAfter(userId, oneMinuteAgo);
@@ -322,6 +337,7 @@ public class ArticleService {
         }
     }
 
+    /** 将文章对象转为前端需要的Map结构 */
     private Map<String, Object> articleToMap(Article article) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", article.getId());
@@ -340,6 +356,7 @@ public class ArticleService {
         return map;
     }
 
+    /** 批量根据分类ID查询分类名映射 */
     private Map<String, String> resolveCategoryNames(Set<String> categoryIds) {
 
         if (categoryIds == null || categoryIds.isEmpty()) {
@@ -352,6 +369,7 @@ public class ArticleService {
         return categories.stream().collect(Collectors.toMap(Categories::getId, Categories::getName, (a, b) -> a));
     }
 
+    /** 批量根据标签ID查询标签名映射 */
     private Map<String, String> resolveTagNames(Set<String> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) {
             return Collections.emptyMap();
@@ -361,6 +379,7 @@ public class ArticleService {
         return tags.stream().collect(Collectors.toMap(Tags::getId, Tags::getName, (a, b) -> a));
     }
 
+    /** 批量根据作者ID查询作者信息映射 */
     private Map<Integer, User> resolveAuthors(Set<Integer> authorIds) {
         if (authorIds == null || authorIds.isEmpty()) {
             return Collections.emptyMap();
@@ -381,6 +400,7 @@ public class ArticleService {
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
+    /** 查询发布时间晚于当前文章的下一篇公开文章 */
     private Optional<Article> findNextArticle(LocalDateTime published) {
         Query query = new Query(Criteria.where("published").gt(published)
                 .and("deleted").ne(true)

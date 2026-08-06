@@ -31,6 +31,23 @@ spring:
     password:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+  # Jackson 配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+# 日志配置
+logging:
+  charset:
+    console: UTF-8   # 控制台输出字符集，解决中文 Windows 下日志乱码
+    file: UTF-8      # 日志文件输出字符集
+
 # MyBatis-Plus 配置
 mybatis-plus:
   configuration:
@@ -43,17 +60,6 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
-  # 文件上传配置
-  servlet:
-    multipart:
-      max-file-size: 5MB
-      max-request-size: 5MB
-
-  # Jackson 配置
-  jackson:
-    date-format: yyyy-MM-dd HH:mm:ss
-    time-zone: Asia/Shanghai
-
 # JWT 配置
 jwt:
   secret:
@@ -64,10 +70,14 @@ jwt:
 cors:
   allowed-origins: http://localhost:5173,http://localhost:5175
 
+# Cookie 安全配置：生产环境务必通过环境变量 COOKIE_SECURE=true 启用
+cookie:
+  secure: ${COOKIE_SECURE:false}
+
 # 文件上传路径
 upload:
-  dir: D:/图片
-  base-url: http://localhost:3001
+  dir: ${UPLOAD_DIR:D:/图片}
+  base-url: ${UPLOAD_BASE_URL:http://localhost:3001}
 
 # 阿里云短信配置
 aliyun:

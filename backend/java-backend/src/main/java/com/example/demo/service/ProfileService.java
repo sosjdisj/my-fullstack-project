@@ -12,6 +12,7 @@ import com.example.demo.repository.mongo.ArticleRepository;
 import com.example.demo.repository.mongo.CategoriesRepository;
 import com.example.demo.repository.mongo.TagsRepository;
 import com.example.demo.repository.mongo.UserArticleInteractionRepository;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -48,6 +49,7 @@ public class ProfileService {
     @Value("${upload.base-url}")
     private String baseUrl;
 
+    /** 查询用户个人资料 */
     public Map<String, Object> getProfile(Integer userId) {
         User user = userMapper.selectById(userId);
         if (user == null) {
@@ -64,6 +66,7 @@ public class ProfileService {
         return result;
     }
 
+    /** 更新用户资料，支持同时上传头像，返回最新资料 */
     public Map<String, Object> updateProfile(Integer userId, Map<String, String> updateData, MultipartFile avatar) {
         User user = userMapper.selectById(userId);
         if (user == null) {
@@ -111,6 +114,7 @@ public class ProfileService {
         return getProfile(userId);
     }
 
+    /** 分页查询用户收藏的文章列表 */
     public Map<String, Object> getArticlesCollectedId(Integer userId, int skip, int size) {
         PageRequest pageRequest = PageRequest.of(skip / size, size);
         Page<UserArticleInteraction> interactionPage = interactionRepository
@@ -119,6 +123,7 @@ public class ProfileService {
         List<UserArticleInteraction> interactions = interactionPage.getContent();
         List<String> articleIds = interactions.stream()
                 .map(UserArticleInteraction::getArticleId)
+                .map(ObjectId::toString)
                 .collect(Collectors.toList());
 
         List<Map<String, Object>> articleList = new ArrayList<>();
@@ -162,6 +167,7 @@ public class ProfileService {
         return result;
     }
 
+    /** 在用户收藏的文章中按标题关键词搜索 */
     public Map<String, Object> getKeywordArticles(Integer userId, int skip, int size, String keyword) {
         PageRequest pageRequest = PageRequest.of(skip / size, size);
         Page<UserArticleInteraction> interactionPage = interactionRepository
@@ -170,6 +176,7 @@ public class ProfileService {
         List<UserArticleInteraction> interactions = interactionPage.getContent();
         List<String> articleIds = interactions.stream()
                 .map(UserArticleInteraction::getArticleId)
+                .map(ObjectId::toString)
                 .collect(Collectors.toList());
 
         List<Map<String, Object>> articleList = new ArrayList<>();
@@ -206,6 +213,7 @@ public class ProfileService {
         return result;
     }
 
+    /** 批量根据分类ID查询分类名映射 */
     private Map<String, String> resolveCategoryNames(Set<String> categoryIds) {
         if (categoryIds == null || categoryIds.isEmpty()) {
             return Collections.emptyMap();
@@ -215,6 +223,7 @@ public class ProfileService {
         return categories.stream().collect(Collectors.toMap(Categories::getId, Categories::getName, (a, b) -> a));
     }
 
+    /** 批量根据标签ID查询标签名映射 */
     private Map<String, String> resolveTagNames(Set<String> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) {
             return Collections.emptyMap();

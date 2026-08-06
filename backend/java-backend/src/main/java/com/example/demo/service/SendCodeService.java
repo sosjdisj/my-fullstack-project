@@ -28,18 +28,22 @@ public class SendCodeService {
         }
     }
 
+    /** 生成6位随机数字验证码 */
     public String generateVerifyCode() {
         return String.format("%06d", (int) (Math.random() * 1000000));
     }
 
+    /** 将验证码以手机号为键缓存到内存 */
     public void storeCode(String phone, String code, LocalDateTime expireTime) {
         codeCache.put(phone, new CodeItem(code, expireTime));
     }
 
+    /** 获取验证码过期时间（当前时间5分钟后） */
     public LocalDateTime getExpireTime() {
         return LocalDateTime.now().plusMinutes(5);
     }
 
+    /** 从缓存获取验证码，过期或不存在则返回null */
     public CodeItem getCode(String phone) {
         CodeItem item = codeCache.get(phone);
         if (item == null) {
@@ -52,6 +56,7 @@ public class SendCodeService {
         return item;
     }
 
+    /** 从缓存移除指定手机的验证码 */
     public void removeCode(String phone) {
         codeCache.remove(phone);
     }

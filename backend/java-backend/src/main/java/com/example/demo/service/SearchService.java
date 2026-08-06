@@ -33,6 +33,7 @@ public class SearchService {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    /** 根据关键词分页搜索文章标题，附带分类、标签信息 */
     public Map<String, Object> searchArticles(String keyword, int page, int size) {
         Criteria criteria = new Criteria().andOperator(
                 Criteria.where("deleted").ne(true),
@@ -86,6 +87,7 @@ public class SearchService {
         return result;
     }
 
+    /** 根据关键词搜索文章标题，返回最多5条用于搜索联想 */
     public List<String> getArticleTitles(String keyword) {
         Criteria criteria = new Criteria().andOperator(
                 Criteria.where("deleted").ne(true),
@@ -101,6 +103,7 @@ public class SearchService {
         return articles.stream().map(Article::getTitle).collect(Collectors.toList());
     }
 
+    /** 获取浏览量最高的5篇文章标题作为热搜词 */
     public List<String> getHotSearchTitles() {
         PageRequest pageRequest = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "pageViews"));
         Page<Article> articlePage = articleRepository.findByDeletedNotAndStatus(true, "PUBLIC", pageRequest);
@@ -108,6 +111,7 @@ public class SearchService {
         return articlePage.getContent().stream().map(Article::getTitle).collect(Collectors.toList());
     }
 
+    /** 批量根据分类ID查询分类名映射 */
     private Map<String, String> resolveCategoryNames(Set<String> categoryIds) {
         if (categoryIds == null || categoryIds.isEmpty()) {
             return Collections.emptyMap();
@@ -117,6 +121,7 @@ public class SearchService {
         return categories.stream().collect(Collectors.toMap(Categories::getId, Categories::getName, (a, b) -> a));
     }
 
+    /** 批量根据标签ID查询标签名映射 */
     private Map<String, String> resolveTagNames(Set<String> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) {
             return Collections.emptyMap();

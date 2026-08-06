@@ -17,6 +17,7 @@ public class PlaylistsController {
     @Autowired
     private PlaylistsService playlistsService;
 
+    /** 获取歌单列表，支持每日推荐和普通模式 */
     @GetMapping
     public ApiResponse<Map<String, Object>> getPlaylistList(
             @RequestParam(defaultValue = "normal") String mode,
@@ -30,6 +31,7 @@ public class PlaylistsController {
         return ApiResponse.success("获取歌单列表成功", result);
     }
 
+    /** 获取歌单封面信息，登录用户可查看收藏状态 */
     @GetMapping("/{id}/info")
     public ApiResponse<Map<String, Object>> getPlaylistInfo(
             @PathVariable String id, HttpServletRequest request) {
@@ -39,6 +41,7 @@ public class PlaylistsController {
         return ApiResponse.success("获取歌单信息成功", result);
     }
 
+    /** 分页获取歌单内的歌曲列表 */
     @GetMapping("/{id}/songs")
     public ApiResponse<Map<String, Object>> getPlaylistSongs(
             @PathVariable String id,
@@ -61,6 +64,7 @@ public class PlaylistsController {
         return ApiResponse.success("获取收藏歌单成功", result);
     }
 
+    /** 收藏歌单 */
     @PostMapping("/collects")
     public ApiResponse<Map<String, Object>> collectPlaylist(@RequestBody Map<String, String> body, HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
@@ -72,6 +76,7 @@ public class PlaylistsController {
         return ApiResponse.success("收藏歌单成功", result);
     }
 
+    /** 取消收藏歌单 */
     @DeleteMapping("/{id}/collects")
     public ApiResponse<Map<String, Object>> uncollectPlaylist(@PathVariable String id, HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
@@ -79,6 +84,7 @@ public class PlaylistsController {
         return ApiResponse.success("取消收藏歌单成功", result);
     }
 
+    /** 从请求中获取登录用户信息，未登录则抛出异常 */
     private JwtUtil.UserInfo getAuth(HttpServletRequest request) {
         JwtUtil.UserInfo auth = (JwtUtil.UserInfo) request.getAttribute("auth");
         if (auth == null) {

@@ -22,6 +22,7 @@ public class JwtUtil {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
 
+    /** 根据配置的密钥构造 JWT 签名密钥，长度不足时自动补齐 */
     private SecretKey getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         // 确保密钥长度足够（至少256位用于HS256）
@@ -33,6 +34,7 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
+    /** 生成短期的 JWT 访问令牌，携带用户基本信息 */
     public String generateAccessToken(Integer userId, String username, String cover, String signature) {
         return Jwts.builder()
                 .subject(userId.toString())
@@ -46,6 +48,7 @@ public class JwtUtil {
                 .compact();
     }
 
+    /** 生成长期的 JWT 刷新令牌，用于续签访问令牌 */
     public String generateRefreshToken(Integer userId, String username, String cover, String signature) {
         return Jwts.builder()
                 .subject(userId.toString())
@@ -59,12 +62,14 @@ public class JwtUtil {
                 .compact();
     }
 
+    /** 一次性生成访问令牌和刷新令牌对 */
     public TokenPair generateTokenPair(Integer userId, String username, String cover, String signature) {
         String accessToken = generateAccessToken(userId, username, cover, signature);
         String refreshToken = generateRefreshToken(userId, username, cover, signature);
         return new TokenPair(accessToken, refreshToken);
     }
 
+    /** 校验 JWT 令牌并返回用户信息，校验失败返回 null */
     public UserInfo verifyToken(String token) {
         try {
             Claims claims = Jwts.parser()

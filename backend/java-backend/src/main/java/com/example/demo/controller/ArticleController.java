@@ -21,6 +21,7 @@ public class ArticleController {
     @Autowired
     private ArticleService articleService;
 
+    /** 分页获取文章列表 */
     @GetMapping
     public ApiResponse<Map<String, Object>> getArticleList(
             @RequestParam(defaultValue = "1") int page,
@@ -55,6 +56,7 @@ public class ArticleController {
         return ApiResponse.success("获取文章详情成功", result);
     }
 
+    /** 点赞文章 */
     @PostMapping("/likes")
     public ApiResponse<Map<String, Object>> likeArticle(@RequestBody Map<String, String> body, HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
@@ -66,6 +68,7 @@ public class ArticleController {
         return ApiResponse.success("点赞成功", Map.of("updatedLikes", likes, "status", "like"));
     }
 
+    /** 取消点赞文章 */
     @DeleteMapping("/likes/{id}")
     public ApiResponse<Map<String, Object>> unlikeArticle(@PathVariable String id, HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
@@ -73,6 +76,7 @@ public class ArticleController {
         return ApiResponse.success("取消点赞成功", Map.of("updatedLikes", likes, "status", "unlike"));
     }
 
+    /** 收藏文章 */
     @PostMapping("/collects")
     public ApiResponse<Map<String, Object>> collectArticle(@RequestBody Map<String, String> body, HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
@@ -84,6 +88,7 @@ public class ArticleController {
         return ApiResponse.success("收藏成功", Map.of("updatedCollects", collects, "status", "collect"));
     }
 
+    /** 取消收藏文章 */
     @DeleteMapping("/collects/{id}")
     public ApiResponse<Map<String, Object>> uncollectArticle(@PathVariable String id, HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
@@ -91,6 +96,7 @@ public class ArticleController {
         return ApiResponse.success("取消收藏成功", Map.of("updatedCollects", collects, "status", "uncollect"));
     }
 
+    /** 分页获取文章评论列表 */
     @GetMapping("/{id}/comments")
     public ApiResponse<Map<String, Object>> getArticleComments(
             @PathVariable String id,
@@ -100,6 +106,7 @@ public class ArticleController {
         return ApiResponse.success("获取评论成功", result);
     }
 
+    /** 发表文章评论 */
     @PostMapping("/{id}/comments")
     public ApiResponse<Map<String, Object>> createArticleComment(
             @PathVariable String id,
@@ -114,6 +121,7 @@ public class ArticleController {
         return ApiResponse.success("评论成功", Map.of("count", count));
     }
 
+    /** 从请求中获取登录用户信息，未登录则抛出异常 */
     private JwtUtil.UserInfo getAuth(HttpServletRequest request) {
         JwtUtil.UserInfo auth = (JwtUtil.UserInfo) request.getAttribute("auth");
         if (auth == null) {

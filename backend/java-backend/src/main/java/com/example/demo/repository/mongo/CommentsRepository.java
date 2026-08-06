@@ -10,9 +10,9 @@ public interface CommentsRepository extends MongoRepository<Comments, String> {
 
     Page<Comments> findByArticleIdAndDeletedNotAndReviewStatus(ObjectId articleId, Boolean deleted, String reviewStatus, Pageable pageable);
 
-    long countByArticleIdAndDeletedNotAndReviewStatus(String articleId, Boolean deleted, String reviewStatus);
+    long countByArticleIdAndDeletedNotAndReviewStatus(ObjectId articleId, Boolean deleted, String reviewStatus);
 
-    long countByArticleId(String articleId);
+    long countByArticleId(ObjectId articleId);
 
     boolean existsByUserIdAndCreateTimeAfter(Integer userId, java.time.LocalDateTime after);
 }

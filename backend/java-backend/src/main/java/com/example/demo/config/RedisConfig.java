@@ -15,6 +15,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfig {
 
+    /** 自定义 RedisTemplate，key 用 String 序列化、value 用 JSON 序列化 */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
@@ -39,6 +40,7 @@ public class RedisConfig {
         return template;
     }
 
+    /** 提供 StringRedisTemplate，专用于纯字符串键值场景（如限流计数） */
     @Bean
     public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
         return new StringRedisTemplate(connectionFactory);

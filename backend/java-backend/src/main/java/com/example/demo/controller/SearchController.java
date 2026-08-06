@@ -24,12 +24,14 @@ public class SearchController {
         return ApiResponse.success("搜索文章成功", result);
     }
 
+    /** 按关键词搜索文章标题 */
     @GetMapping("/titles")
     public ApiResponse<List<String>> searchTitles(@RequestParam String keyword) {
         List<String> titles = searchService.getArticleTitles(keyword);
         return ApiResponse.success("搜索标题成功", titles);
     }
 
+    /** 获取热搜标题列表 */
     @GetMapping("/hot-titles")
     public ApiResponse<List<String>> getHotTitles() {
         List<String> titles = searchService.getHotSearchTitles();

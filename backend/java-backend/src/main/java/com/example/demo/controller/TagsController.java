@@ -22,6 +22,7 @@ public class TagsController {
         return ApiResponse.success("获取标签列表成功", result);
     }
 
+    /** 按标签分页获取文章列表 */
     @GetMapping("/{content}")
     public ApiResponse<Map<String, Object>> getArticlesByTag(
             @PathVariable String content,

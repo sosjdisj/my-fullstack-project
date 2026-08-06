@@ -1,10 +1,12 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from middleware.security import IpWhitelistMiddleware
 from routers.chat import router as chat_router
 from routers.conversations import router as conversations_router
 from routers.system import router as system_router
@@ -37,12 +39,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS：AI 服务仅供 Java 后端内部调用，来源固定为本地后端
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3001"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
+
+# IP 白名单：AI 服务仅供 Java 后端内部调用，仅允许回环地址；如需跨机部署通过 AI_SERVICE_ALLOWED_IPS 扩展
+_extra_ips = os.getenv("AI_SERVICE_ALLOWED_IPS")
+app.add_middleware(
+    IpWhitelistMiddleware,
+    allowed_ips=_extra_ips.split(",") if _extra_ips else None,
 )
 
 app.include_router(chat_router)
@@ -51,4 +61,7 @@ app.include_router(system_router)
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # 默认仅监听回环地址，避免暴露到外网；如需对外可通过环境变量覆盖
+    host = os.getenv("AI_SERVICE_HOST", "127.0.0.1")
+    port = int(os.getenv("AI_SERVICE_PORT", "8000"))
+    uvicorn.run(app, host=host, port=port)

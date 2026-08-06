@@ -23,6 +23,7 @@ public class ProfileController {
     @Autowired
     private ArticleService articleService;
 
+    /** 获取当前用户的个人信息 */
     @GetMapping
     public ApiResponse<Map<String, Object>> getProfile(HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
@@ -30,6 +31,7 @@ public class ProfileController {
         return ApiResponse.success("获取个人信息成功", profile);
     }
 
+    /** 更新当前用户的个人信息，支持头像上传 */
     @PatchMapping
     public ApiResponse<Map<String, Object>> updateProfile(
             @RequestParam(value = "username", required = false) String username,
@@ -48,6 +50,7 @@ public class ProfileController {
         return ApiResponse.success("更新个人信息成功", profile);
     }
 
+    /** 分页获取当前用户收藏的文章 */
     @GetMapping("/articles/collected")
     public ApiResponse<Map<String, Object>> getCollectedArticles(
             @RequestParam(defaultValue = "1") int page,
@@ -59,6 +62,7 @@ public class ProfileController {
         return ApiResponse.success("获取收藏文章成功", result);
     }
 
+    /** 按关键词搜索当前用户收藏的文章 */
     @GetMapping("/keyword")
     public ApiResponse<Map<String, Object>> getKeywordArticles(
             @RequestParam String keyword,
@@ -74,6 +78,7 @@ public class ProfileController {
         return ApiResponse.success("搜索收藏文章成功", result);
     }
 
+    /** 取消收藏指定文章 */
     @DeleteMapping("/{id}/collects")
     public ApiResponse<Map<String, Object>> uncollectArticle(@PathVariable String id, HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
@@ -81,6 +86,7 @@ public class ProfileController {
         return ApiResponse.success("已从收藏夹移除", Map.of("updatedCollects", updatedCollects, "status", "uncollect"));
     }
 
+    /** 从请求中获取登录用户信息，未登录则抛出异常 */
     private JwtUtil.UserInfo getAuth(HttpServletRequest request) {
         JwtUtil.UserInfo auth = (JwtUtil.UserInfo) request.getAttribute("auth");
         if (auth == null) {

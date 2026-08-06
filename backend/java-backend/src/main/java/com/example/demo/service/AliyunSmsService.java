@@ -24,6 +24,7 @@ public class AliyunSmsService {
 
     private com.aliyun.dysmsapi20170525.Client smsClient;
 
+    /** 初始化阿里云短信客户端 */
     @PostConstruct
     public void init() throws Exception {
         var config = new com.aliyun.teaopenapi.models.Config();

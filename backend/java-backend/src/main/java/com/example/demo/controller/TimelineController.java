@@ -14,6 +14,7 @@ public class TimelineController {
     @Autowired
     private TimelineService timelineService;
 
+    /** 分页获取时间线列表 */
     @GetMapping
     public ApiResponse<Map<String, Object>> getTimelineList(
             @RequestParam(defaultValue = "1") int page,

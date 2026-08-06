@@ -14,6 +14,7 @@ public class AuthService {
     @Autowired
     private UserMapper userMapper;
 
+    /** 校验用户名和密码，返回登录用户对象 */
     public User verifyLogin(String username, String password) {
         User user = userMapper.selectOne(
                 new LambdaQueryWrapper<User>().eq(User::getUsername, username)
@@ -30,12 +31,14 @@ public class AuthService {
         return user;
     }
 
+    /** 检查手机号是否已被注册 */
     public boolean checkPhoneExists(String phone) {
         return userMapper.selectCount(
                 new LambdaQueryWrapper<User>().eq(User::getPhone, phone)
         ) > 0;
     }
 
+    /** 注册新用户，密码加密后入库并返回用户对象 */
     public User registerUser(String username, String password, String phone) {
         User user = new User();
         user.setUsername(username);
@@ -45,5 +48,17 @@ public class AuthService {
         user.setAccountStatus(User.AccountStatus.ACTIVE);
         userMapper.insert(user);
         return user;
+    }
+
+    /** 根据手机号重置密码，要求该手机号已注册 */
+    public void resetPassword(String phone, String newPassword) {
+        User user = userMapper.selectOne(
+                new LambdaQueryWrapper<User>().eq(User::getPhone, phone)
+        );
+        if (user == null) {
+            throw new BusinessException(400, "该手机号未注册");
+        }
+        user.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+        userMapper.updateById(user);
     }
 }

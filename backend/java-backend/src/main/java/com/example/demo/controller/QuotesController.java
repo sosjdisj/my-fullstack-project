@@ -16,6 +16,7 @@ public class QuotesController {
     @Autowired
     private QuotesService quotesService;
 
+    /** 获取每日语录 */
     @GetMapping("/daily")
     public ApiResponse<List<String>> getDailyQuotes() {
         List<String> quotes = quotesService.getDailyQuotes();

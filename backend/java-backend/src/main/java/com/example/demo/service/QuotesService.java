@@ -14,6 +14,7 @@ public class QuotesService {
     @Autowired
     private QuotesRepository quotesRepository;
 
+    /** 随机获取若干条每日金句 */
     public List<String> getDailyQuotes() {
         List<Quotes> quotes = quotesRepository.findRandomQuotes(20);
         return quotes.stream()

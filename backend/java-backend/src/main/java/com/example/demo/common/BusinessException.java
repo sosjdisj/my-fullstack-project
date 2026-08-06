@@ -8,6 +8,7 @@ public class BusinessException extends RuntimeException {
 
     private final int code;
 
+    /** 构造业务异常，携带错误码和提示信息 */
     public BusinessException(int code, String message) {
         super(message);
         this.code = code;
