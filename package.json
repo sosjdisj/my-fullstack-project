@@ -3,14 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "frontend"
+    "frontend/main-app",
+    "frontend/sub-apps/app-a"
   ],
   "scripts": {
-    "dev": "concurrently -n frontend,java,python -c green,blue,yellow \"npm:dev:frontend\" \"npm:dev:java\" \"npm:dev:python\"",
-    "dev:frontend": "npm run dev -w frontend",
+    "dev": "concurrently -n main-app,sub-app,java,python -c green,cyan,blue,yellow \"npm:dev:main-app\" \"npm:dev:sub-app\" \"npm:dev:java\" \"npm:dev:python\"",
+    "dev:main-app": "npm run dev -w frontend/main-app",
+    "dev:sub-app": "npm run dev -w frontend/sub-apps/app-a",
+    "dev:frontend": "concurrently -n main-app,sub-app -c green,cyan \"npm:dev:main-app\" \"npm:dev:sub-app\"",
     "dev:java": "cd \"backend/java-backend\" && .\\mvnw.cmd spring-boot:run",
     "dev:python": "cd \"backend/ai-service\" && cross-env HF_ENDPOINT=https://hf-mirror.com .\\venv\\Scripts\\python.exe main.py",
-    "build": "npm run build -w frontend",
+    "build": "npm run build -w frontend/main-app && npm run build -w frontend/sub-apps/app-a",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces"
   },
