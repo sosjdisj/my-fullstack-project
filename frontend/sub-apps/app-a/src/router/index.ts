@@ -4,11 +4,13 @@ import type { RouteRecordRaw, Router } from 'vue-router'
 
 // 使用 RouteRecordRaw 类型定义路由，获得更好的类型提示
 export const routes: Array<RouteRecordRaw> = [
-    {
+    // 嵌入模式下不注册 /login 路由：登录由主应用统管，子应用不暴露独立登录入口
+    // 独立运行时才注册，保证脱离主应用也能登录使用
+    ...(!window.__MICRO_APP_ENVIRONMENT__ ? [{
         path: '/login',
         name: '登录',
         component: () => import('@/views/LoginPage/index.vue')
-    },
+    }] : []),
     {
         path: '/',
         component: () => import('@/views/MusicPlayer/index.vue'),
