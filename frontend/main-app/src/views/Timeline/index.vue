@@ -15,10 +15,10 @@
                         <h2 class="lnside-h2">2025</h2>
                     </div>
 
-                    <div class="flex">
+                    <div class="timeline-list">
                         <div class="main-line"></div>
 
-                        <div v-for="(item, index) in timelienList" :key="item._id" @click="handArticleData(item._id)"
+                        <div v-for="(item, index) in timelienList" :key="item.id" @click="handArticleData(item.id)"
                             class="timeline-item" :style="{ '--hue': (index * 60) % 360 + 'deg' }">
 
                             <div class="lnside-div">
@@ -119,6 +119,7 @@
             position: relative;
             z-index: 1;
             padding-bottom: 200px;
+            cursor: pointer;
 
             .lnside {
                 width: 100%;
@@ -145,7 +146,7 @@
                     }
                 }
 
-                .flex {
+                .timeline-list {
                     padding-top: 5%;
                     position: relative;
 

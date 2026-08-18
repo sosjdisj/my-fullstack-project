@@ -55,7 +55,7 @@ export interface ArticleComment {
 }
 
 export interface TimelineList {
-    _id: string,
+    id: string,
     title: string,
     cover: string,
     published: string,
