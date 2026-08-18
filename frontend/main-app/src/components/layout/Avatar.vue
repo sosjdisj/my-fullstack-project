@@ -47,11 +47,12 @@
     }
 
     const handLogout = async () => {
-        await post('/auth/logout')
+        const result = await post('/auth/logout')
         if (route.path === '/setting') {
             router.push('/home')
         }
         clearUser()
+        ElMessage.success(result.message)
     }
 </script>
 

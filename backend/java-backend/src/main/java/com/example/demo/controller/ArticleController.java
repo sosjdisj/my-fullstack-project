@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.ValidationUtil;
 import com.example.demo.common.JwtUtil;
 import com.example.demo.model.mongo.Article;
 import com.example.demo.service.ArticleService;
@@ -114,9 +115,7 @@ public class ArticleController {
             HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
         String content = body.get("content");
-        if (content == null || content.isBlank()) {
-            throw new BusinessException(400, "评论内容不能为空");
-        }
+        ValidationUtil.checkContent(content, 500, "评论内容");
         long count = articleService.createArticleComment(id, content, auth.getUserId());
         return ApiResponse.success("评论成功", Map.of("count", count));
     }

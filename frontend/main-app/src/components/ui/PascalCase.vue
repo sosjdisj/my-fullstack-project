@@ -50,6 +50,7 @@
     // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { get } from '@/api/request';
     import { useNavigation } from '@/utils/navigation';
+    import { validateContent } from '@/utils/validation';
 
     const props = defineProps({
         active: Boolean
@@ -87,6 +88,12 @@
     const handleSearch = async () => {
         const searchText = keyword.value.trim();
 
+        const error = validateContent(searchText, { max: 50, name: '搜索词' })
+        if (error) {
+            ElMessage.warning(error)
+            return
+        }
+
         const rawHistory = localStorage.getItem(SEARCH_HISTORY);
         let historyList: string[] = [];
 
@@ -105,7 +112,7 @@
         searchHistoryList.value = historyList;
 
         emit('close')
-        goSearchResult(keyword.value)
+        goSearchResult(searchText)
         keyword.value = ''
     }
 

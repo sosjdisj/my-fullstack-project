@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.ValidationUtil;
 import com.example.demo.common.JwtUtil;
 import com.example.demo.service.ArticleService;
 import com.example.demo.service.ProfileService;
@@ -41,6 +42,10 @@ public class ProfileController {
             HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
 
+        ValidationUtil.checkOptionalLength(username, 20, "用户名");
+        ValidationUtil.checkOptionalPhone(phone);
+        ValidationUtil.checkOptionalLength(signature, 100, "个人简介");
+
         Map<String, String> updateData = new HashMap<>();
         if (username != null) updateData.put("username", username);
         if (signature != null) updateData.put("signature", signature);
@@ -70,9 +75,7 @@ public class ProfileController {
             @RequestParam(defaultValue = "10") int size,
             HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
-        if (keyword == null || keyword.isBlank()) {
-            throw new BusinessException(400, "关键词不能为空");
-        }
+        ValidationUtil.checkContent(keyword, 50, "关键词");
         int skip = (page - 1) * size;
         Map<String, Object> result = profileService.getKeywordArticles(auth.getUserId(), skip, size, keyword);
         return ApiResponse.success("搜索收藏文章成功", result);

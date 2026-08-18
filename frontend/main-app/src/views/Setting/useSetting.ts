@@ -3,6 +3,7 @@ import { get, getModifiedFields, patch } from '@/api/request';
 import type { Mark } from '@/types/index'
 import { buildArticleFormData, deepEqual, isFormDataComplete } from '@/utils/helpers';
 import { useUserStore } from '@/stores/user'
+import { validateUsername, validatePhone, validateContent } from '@/utils/validation'
 
 
 export function useSetting() {
@@ -26,6 +27,15 @@ export function useSetting() {
         if (isSubmitting.value) return ElMessage.warning('正在提交中，请稍候...');
 
         if (!isFormDataComplete(userData.value, ['cover'])) return ElMessage.warning('数据没有填写完整');
+
+        const usernameErr = validateUsername(userData.value.username)
+        if (usernameErr) return ElMessage.error(usernameErr)
+
+        const phoneErr = validatePhone(userData.value.phone)
+        if (phoneErr) return ElMessage.error(phoneErr)
+
+        const signatureErr = validateContent(userData.value.signature, { max: 100, name: '个人简介', allowEmpty: true })
+        if (signatureErr) return ElMessage.error(signatureErr)
 
         const hasChanged = !deepEqual(checkForChanges.value, userData.value);
 

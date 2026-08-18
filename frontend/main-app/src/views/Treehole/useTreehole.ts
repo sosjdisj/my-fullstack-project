@@ -2,6 +2,7 @@
 import type { VNodeRef } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { get, post } from '@/api/request'
+import { validateContent } from '@/utils/validation'
 import type { DanmakusList } from '@/types/index'
 
 interface Danmu {
@@ -24,7 +25,7 @@ export function useTreehole() {
   const danmakuRef = ref<DanmakuComponent | null>(null)
 
   const allDanmus = ref<Danmu[]>([])
-  const content = ref<string>()
+  const content = ref<string>('')
   const store = useUserStore()
   let time: number | null
 
@@ -40,9 +41,10 @@ export function useTreehole() {
 
     if (!store.token) return ElMessage.error('请先登录')
 
-    if (!content.value) return ElMessage.error('弹幕内容不能为空')
+    const error = validateContent(content.value, { max: 100, name: '弹幕' })
+    if (error) return ElMessage.error(error)
 
-    const result = await post('/treehole', { content: content.value })
+    const result = await post('/treehole', { content: content.value.trim() })
 
     if (!result.success) return
 

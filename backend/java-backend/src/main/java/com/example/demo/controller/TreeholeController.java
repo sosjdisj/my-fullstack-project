@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.ValidationUtil;
 import com.example.demo.common.JwtUtil;
 import com.example.demo.service.TreeholeService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,9 +35,7 @@ public class TreeholeController {
             throw new BusinessException(401, "未登录");
         }
         String content = body.get("content");
-        if (content == null || content.isBlank()) {
-            throw new BusinessException(400, "内容不能为空");
-        }
+        ValidationUtil.checkContent(content, 100, "内容");
         treeholeService.createMessage(content, auth.getUserId());
         return ApiResponse.success("发送消息成功");
     }

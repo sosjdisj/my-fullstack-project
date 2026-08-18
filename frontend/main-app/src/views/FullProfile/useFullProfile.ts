@@ -5,6 +5,7 @@ import { usePaginationCache, autoLoadIfNotFillScreen } from "@/utils/helpers"
 import { CACHE_KEYS } from "@/constants/cacheKeys"
 import { Delete } from "@/api/request"
 import { useNavigation } from '@/utils/navigation'
+import { validateContent } from '@/utils/validation'
 
 export function useFullProfile() {
     const { goArticleDetail } = useNavigation()
@@ -83,7 +84,12 @@ export function useFullProfile() {
 
         if (isLoading.value || isFinished.value) return
 
-        if(keyword.value==='') return getCollectedArticles()
+        const trimmedKeyword = keyword.value.trim()
+
+        if (!trimmedKeyword) return getCollectedArticles()
+
+        const error = validateContent(trimmedKeyword, { max: 50, name: '搜索词' })
+        if (error) return ElMessage.warning(error)
 
         if (!hasResetSearchState.value) resetSearchList()
 
@@ -92,9 +98,9 @@ export function useFullProfile() {
 
         const result = await usePaginationCache(
             CACHE_KEYS.SEARCH_COLLECTED_ARTICLES,
-            `search_${keyword.value}_${page.value}`,
+            `search_${trimmedKeyword}_${page.value}`,
             '/profile/keyword',
-            { page: page.value, keyword: keyword.value }
+            { page: page.value, keyword: trimmedKeyword }
         )
 
         if (result.list.length === 0) {

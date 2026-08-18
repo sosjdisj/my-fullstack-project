@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.common.ApiResponse;
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.ValidationUtil;
 import com.example.demo.common.JwtUtil;
 import com.example.demo.model.mongo.AiMessage;
 import com.example.demo.model.mongo.Conversation;
@@ -91,9 +92,7 @@ public class ChatController {
             HttpServletRequest request) {
 
         String message = body.get("content");
-        if (message == null || message.isBlank()) {
-            throw new BusinessException(400, "消息内容不能为空");
-        }
+        ValidationUtil.checkContent(message, 2000, "消息内容");
 
         JwtUtil.UserInfo auth = getAuth(request);
 

@@ -208,4 +208,22 @@ export function hasNoErrors(errors: LoginResult): boolean {
     return Object.values(errors).every(value => value === '')
 }
 
+export function validateContent(
+    text: string | undefined | null,
+    options?: { min?: number; max?: number; name?: string; allowEmpty?: boolean; trim?: boolean }
+): string | null {
+    const { min = 1, max = 500, name = '内容', allowEmpty = false, trim = true } = options || {}
+
+    const value = trim ? (text ?? '').trim() : (text ?? '')
+
+    if (!value) {
+        return allowEmpty ? null : `${name}不能为空`
+    }
+
+    if (value.length < min) return `${name}长度不能少于${min}个字符`
+    if (value.length > max) return `${name}长度不能超过${max}个字符`
+
+    return null
+}
+
 export { errors }

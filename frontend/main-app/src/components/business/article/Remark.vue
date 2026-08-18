@@ -38,12 +38,15 @@
 <script setup lang="ts">
     // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import { post } from '@/api/request';
+    import { useUserStore } from '@/stores/user';
+    import { validateContent } from '@/utils/validation';
 
     const props = defineProps<{
         comments: number
         id: string
     }>()
 
+    const userStore = useUserStore()
     const isYulan = ref(false)
     const content = ref('')
 
@@ -60,13 +63,17 @@
         isYulan.value = false
     }
     const handPinglun = async () => {
-        if (!content.value) return ElMessage.error('评论内容不能为空')
+        if (!userStore.token) return ElMessage.error('请先登录后再发表评论')
 
-        const result = await post(`/article/${props.id}/comments`, { content: content.value })
+        const error = validateContent(content.value, { max: 500, name: '评论' })
+        if (error) return ElMessage.error(error)
+
+        const result = await post(`/article/${props.id}/comments`, { content: content.value.trim() })
 
         if (result.success) {
             ElMessage.success(result.message)
             content.value = ''
+            isYulan.value = false
         }
     }
 </script>
