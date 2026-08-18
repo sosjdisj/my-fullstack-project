@@ -5,12 +5,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- 内容安全策略：限制资源加载来源，防范 XSS 与数据外泄 -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: http://localhost:3001 https:; connect-src 'self' http://localhost:3001 http://localhost:3002 http://localhost:8000 ws://localhost:3002; media-src 'self' http://localhost:3001 blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+  <!-- 内容安全策略：限制资源加载来源，防范 XSS 与数据外泄。
+       注意 frame-ancestors / sandbox / report-uri 三个 CSP 指令无法通过 <meta> 生效，
+       必须由 HTTP 响应头注入；X-Frame-Options: SAMEORIGIN 由 vite.config.ts 的 server.headers 注入，
+       允许同源 iframe 嵌入（micro-app 沙箱需要），等价于 frame-ancestors 'self' -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:5175; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com http://localhost:5175; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: http://localhost:3001 http://localhost:5175 https:; connect-src 'self' http://localhost:3001 http://localhost:3002 http://localhost:8000 http://localhost:5175 ws://localhost:3002 ws://localhost:5175; media-src 'self' http://localhost:3001 http://localhost:5175 blob:; frame-src 'self' http://localhost:5175; base-uri 'self' http://localhost:5175; form-action 'self'">
 
-  <!-- 防止 MIME 嗅探与点击劫持 -->
+  <!-- 防止 MIME 嗅探；referrer 策略。点击劫持由 X-Frame-Options 响应头防御 -->
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="X-Frame-Options" content="DENY">
   <meta name="referrer" content="no-referrer">
 
   <!-- 基础 SEO -->
@@ -40,9 +42,6 @@
   <!-- 图标 -->
   <link rel="icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/favicon.ico">
-
-  <!-- 首屏背景图预加载：让浏览器尽早并行下载大图，避免等待 JS 解析后才开始 -->
-  <link rel="preload" as="image" href="/src/assets/1.jpg" fetchpriority="high">
 
   <!-- 后端接口与字体预连接，加速首屏 -->
   <link rel="preconnect" href="http://localhost:3001" crossorigin>

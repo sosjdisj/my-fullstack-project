@@ -5,6 +5,10 @@ import { clearUser } from '@/utils/helpers'
 
 const routes = [
   {
+    path: '/',
+    redirect: '/home',
+  },
+  {
     name: '首页',
     path: '/home',
     component: () => import('@/views/Home/index.vue'),

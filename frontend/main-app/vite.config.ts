@@ -70,9 +70,10 @@ export default defineConfig({
   },
   server: {
     // 开发环境基础安全头，生产环境由反向代理统一注入
+    // X-Frame-Options 使用 SAMEORIGIN 而非 DENY：micro-app iframe 沙箱需要同源嵌入主应用页面
     headers: {
       'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
+      'X-Frame-Options': 'SAMEORIGIN',
       'Referrer-Policy': 'no-referrer',
     },
   },

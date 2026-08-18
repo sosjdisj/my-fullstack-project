@@ -89,7 +89,10 @@ export function useFullProfile() {
         if (!trimmedKeyword) return getCollectedArticles()
 
         const error = validateContent(trimmedKeyword, { max: 50, name: '搜索词' })
-        if (error) return ElMessage.warning(error)
+        if (error) {
+            ElMessage.warning(error)
+            return
+        }
 
         if (!hasResetSearchState.value) resetSearchList()
 

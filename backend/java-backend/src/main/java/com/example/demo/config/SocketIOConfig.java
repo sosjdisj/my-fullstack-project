@@ -55,9 +55,11 @@ public class SocketIOConfig implements CommandLineRunner {
                 List<String> tokenParams = data.getUrlParams().get("token");
                 if (tokenParams != null && !tokenParams.isEmpty()) {
                     String token = tokenParams.get(0);
-                    JwtUtil.UserInfo userInfo = jwtUtil.verifyToken(token);
-                    if (userInfo == null) {
-                        return new AuthorizationResult(false);
+                    if (token != null && !token.isEmpty()) {
+                        JwtUtil.UserInfo userInfo = jwtUtil.verifyToken(token);
+                        if (userInfo == null) {
+                            return new AuthorizationResult(false);
+                        }
                     }
                 }
                 return new AuthorizationResult(true);
