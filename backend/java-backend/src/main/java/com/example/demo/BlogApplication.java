@@ -6,11 +6,11 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 
 @SpringBootApplication
 @EnableMongoRepositories(basePackages = "com.example.demo.repository.mongo")
-public class Demo1Application {
+public class BlogApplication {
 
     /** 应用程序入口，启动 Spring Boot 服务 */
     public static void main(String[] args) {
-        SpringApplication.run(Demo1Application.class, args);
+        SpringApplication.run(BlogApplication.class, args);
     }
 
 }
