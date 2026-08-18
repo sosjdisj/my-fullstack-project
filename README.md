@@ -220,7 +220,8 @@ ollama pull embeddinggemma:300m
 npm install
 
 # Java 后端依赖（Maven 自动下载）
-cd backend/java-backend && ./mvnw install && cd ../../..
+cd backend/java-backend && ./mvnw install && cd ../../..          # macOS / Linux
+cd backend/java-backend; .\mvnw.cmd install; cd ..\..\..           # Windows PowerShell
 
 # Python AI 服务依赖
 cd backend/ai-service
@@ -259,7 +260,8 @@ npm run dev:python     # 仅 Python AI 服务
 npm run build
 
 # 构建 Java 后端 JAR
-cd backend/java-backend && ./mvnw package
+cd backend/java-backend && ./mvnw package                         # macOS / Linux
+cd backend/java-backend; .\mvnw.cmd package                       # Windows PowerShell
 ```
 
 ---
@@ -303,7 +305,8 @@ my-fullstack-project/
 │       │   ├── rag.py                # RAG 检索主流程
 │       │   ├── embedding.py          # 向量化服务
 │       │   ├── reranker.py           # Reranker 重排序
-│       │   └── article_chunk.py      # 文章分块与知识库管理
+│       │   ├── article_chunk.py      # 文章分块与知识库管理
+│       │   └── evaluation.py         # Agent 工具调用效果评测
 │       ├── tools/                     # Agent 工具定义（9 个）
 │       └── routers/                   # FastAPI 路由
 │
