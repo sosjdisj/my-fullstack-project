@@ -195,16 +195,12 @@ public class AuthController {
         return ApiResponse.success("密码重置成功", null);
     }
 
-    /** 刷新访问令牌，通过 refreshToken 换取新的 accessToken */
+    /** 刷新访问令牌，通过 refreshToken 换取新的 accessToken（启用 Refresh Token 旋转：旧 token 立即失效） */
     @PostMapping("/refresh-token")
-    public ApiResponse<Map<String, Object>> refreshToken(@CookieValue(value = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
+    public ApiResponse<Map<String, Object>> refreshToken(@CookieValue(value = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken,
+                                                         HttpServletResponse response) {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new BusinessException(401, "会话已过期，请重新登录");
-        }
-
-        // 校验黑名单：登出后 refreshToken 立即失效
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(REFRESH_TOKEN_BLACKLIST_KEY_PREFIX + refreshToken))) {
-            throw new BusinessException(403, "登录状态已失效，请重新登录");
         }
 
         UserInfo decoded = jwtUtil.verifyToken(refreshToken);
@@ -212,17 +208,43 @@ public class AuthController {
             throw new BusinessException(403, "登录已过期，请重新登录");
         }
 
-        String newAccessToken = jwtUtil.generateAccessToken(
+        // 提取 jti 作为黑名单唯一标识（兼容旧 token 未带 jti 的过渡期，降级用完整 token）
+        String jti = jwtUtil.getJtiFromToken(refreshToken);
+        String blacklistKey = jti != null
+                ? REFRESH_TOKEN_BLACKLIST_KEY_PREFIX + jti
+                : REFRESH_TOKEN_BLACKLIST_KEY_PREFIX + refreshToken;
+
+        // 校验黑名单：登出或上一次刷新后旧 refreshToken 立即失效
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(blacklistKey))) {
+            throw new BusinessException(403, "登录状态已失效，请重新登录");
+        }
+
+        // Refresh Token 旋转：将旧 refreshToken 加入黑名单，TTL 精确为其剩余有效期，防止重放攻击
+        long remainingSeconds = jwtUtil.getTokenRemainingSeconds(refreshToken);
+        if (remainingSeconds > 0) {
+            redisTemplate.opsForValue().set(
+                    blacklistKey,
+                    "1",
+                    remainingSeconds,
+                    TimeUnit.SECONDS
+            );
+        }
+
+        // 生成新的 accessToken 和 refreshToken
+        JwtUtil.TokenPair pair = jwtUtil.generateTokenPair(
                 decoded.getUserId(), decoded.getUsername(),
                 decoded.getCover(), decoded.getSignature()
         );
 
         // 更新Redis缓存
         String cacheKey = "user:token:" + decoded.getUserId();
-        redisTemplate.opsForValue().set(cacheKey, newAccessToken, 2, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set(cacheKey, pair.accessToken(), 2, TimeUnit.HOURS);
+
+        // 下发新的 refreshToken 到 HttpOnly Cookie（前端无需感知，浏览器自动更新）
+        setRefreshTokenCookie(response, pair.refreshToken());
 
         Map<String, Object> data = new HashMap<>();
-        data.put("token", newAccessToken);
+        data.put("token", pair.accessToken());
         data.put("username", decoded.getUsername());
         data.put("avatar", decoded.getCover());
         data.put("signature", decoded.getSignature());
@@ -271,13 +293,21 @@ public class AuthController {
                 String cacheKey = "user:token:" + decoded.getUserId();
                 redisTemplate.delete(cacheKey);
             }
-            // 将 refreshToken 加入黑名单，TTL 与其有效期一致，登出后立即失效
-            redisTemplate.opsForValue().set(
-                    REFRESH_TOKEN_BLACKLIST_KEY_PREFIX + refreshToken,
-                    "1",
-                    REFRESH_TOKEN_TTL_SECONDS,
-                    TimeUnit.SECONDS
-            );
+            // 提取 jti 作为黑名单唯一标识（兼容旧 token 未带 jti 的过渡期，降级用完整 token）
+            String jti = jwtUtil.getJtiFromToken(refreshToken);
+            String blacklistKey = jti != null
+                    ? REFRESH_TOKEN_BLACKLIST_KEY_PREFIX + jti
+                    : REFRESH_TOKEN_BLACKLIST_KEY_PREFIX + refreshToken;
+            // 将 refreshToken 加入黑名单，TTL 精确为其剩余有效期，登出后立即失效
+            long remainingSeconds = jwtUtil.getTokenRemainingSeconds(refreshToken);
+            if (remainingSeconds > 0) {
+                redisTemplate.opsForValue().set(
+                        blacklistKey,
+                        "1",
+                        remainingSeconds,
+                        TimeUnit.SECONDS
+                );
+            }
         }
 
         return ApiResponse.success("退出成功", null);

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -48,10 +49,11 @@ public class JwtUtil {
                 .compact();
     }
 
-    /** 生成长期的 JWT 刷新令牌，用于续签访问令牌 */
+    /** 生成长期的 JWT 刷新令牌，用于续签访问令牌，携带 jti 作为唯一标识供黑名单使用 */
     public String generateRefreshToken(Integer userId, String username, String cover, String signature) {
         return Jwts.builder()
                 .subject(userId.toString())
+                .id(UUID.randomUUID().toString())
                 .claim("userId", userId)
                 .claim("username", username)
                 .claim("cover", cover)
@@ -84,6 +86,35 @@ public class JwtUtil {
             userInfo.setCover(claims.get("cover", String.class));
             userInfo.setSignature(claims.get("signature", String.class));
             return userInfo;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 计算 token 剩余有效期（秒），解析失败或已过期返回 0，用于黑名单 TTL 精确化 */
+    public long getTokenRemainingSeconds(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            long remainingMs = claims.getExpiration().getTime() - System.currentTimeMillis();
+            return remainingMs > 0 ? remainingMs / 1000 : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /** 从 token 中解析 jti（JWT ID），用于黑名单唯一标识，解析失败返回 null */
+    public String getJtiFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.getId();
         } catch (Exception e) {
             return null;
         }
