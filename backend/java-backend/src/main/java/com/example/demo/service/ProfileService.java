@@ -108,7 +108,6 @@ public class ProfileService {
             user.setCover(coverUrl);
         }
 
-        user.setUpdateTime(java.time.LocalDateTime.now());
         userMapper.updateById(user);
 
         return getProfile(userId);

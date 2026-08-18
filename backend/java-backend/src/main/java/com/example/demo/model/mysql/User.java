@@ -25,10 +25,10 @@ public class User {
     @TableField("signature")
     private String signature;
 
-    @TableField("publish_time")
+    @TableField(value = "publish_time", fill = FieldFill.INSERT)
     private LocalDateTime publishTime;
 
-    @TableField("update_time")
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 
     @TableField("cover")
