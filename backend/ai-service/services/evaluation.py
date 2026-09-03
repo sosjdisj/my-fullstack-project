@@ -21,6 +21,7 @@ RAG 评估模块
 """
 
 import asyncio
+import json
 import logging
 import re
 import time
@@ -56,6 +57,18 @@ _eval_llm = ChatOllama(
     base_url=config.OLLAMA_BASE_URL,
     temperature=0.0,
 )
+
+# LLM-as-judge 打分的系统提示词
+_JUDGE_SYSTEM_PROMPT = """你是严格的评估员，对 AI 助手的回答质量打分。只输出一个 JSON 对象，不要输出其他任何内容。
+
+评分维度（各 1-5 分）：
+- relevance（答案相关性）：回答是否切题、完整地回答了用户问题
+- faithfulness（忠实度）：回答中的陈述是否都能在参考资料中找到依据
+  - 5 = 全部有依据；3 = 大部分有依据但有少量推测；1 = 大量内容无依据
+  - 若未提供参考资料，则为 null
+
+输出格式（严格 JSON，不要用 markdown 代码块包裹）：
+{"relevance": <1-5的整数>, "faithfulness": <1-5的整数或null>, "hallucination": <true/false>, "reason": "<一句话理由>"}"""
 
 
 def _get_mongo_db():
@@ -206,6 +219,55 @@ async def _generate_answer(
     return response.content, time.perf_counter() - start
 
 
+def _parse_judge_json(text: str) -> dict:
+    """解析 judge 输出的 JSON（容错处理思考标签与多余文本）"""
+    cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+    match = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
+    if not match:
+        raise ValueError(f"judge 输出中未找到 JSON: {text[:100]}")
+    data = json.loads(match.group(0))
+    return {
+        "relevance": data.get("relevance"),
+        "faithfulness": data.get("faithfulness"),
+        "hallucination": data.get("hallucination"),
+        "reason": data.get("reason", ""),
+    }
+
+
+async def _judge_answer(
+    query: str, answer: str, context: Optional[str] = None
+) -> dict:
+    """
+    用 LLM 对回答打分（LLM-as-judge），弥补关键词命中率的不足
+
+    Args:
+        query: 用户查询
+        answer: 待评估的回答
+        context: 检索到的参考资料文本（无 RAG 模式传 None，跳过忠实度评分）
+
+    Returns:
+        {"relevance": 1-5, "faithfulness": 1-5|None, "hallucination": bool, "reason": str}
+    """
+    prompt = (
+        f"用户问题：{query}\n\n"
+        f"参考资料：\n{context or '（无）'}\n\n"
+        f"待评估回答：\n{answer}"
+    )
+    try:
+        response = await _eval_llm.ainvoke(
+            [SystemMessage(content=_JUDGE_SYSTEM_PROMPT), HumanMessage(content=prompt)]
+        )
+        return _parse_judge_json(response.content)
+    except Exception as e:
+        logger.warning(f"LLM 打分失败: {e}")
+        return {
+            "relevance": None,
+            "faithfulness": None,
+            "hallucination": None,
+            "reason": f"打分失败: {e}",
+        }
+
+
 async def evaluate_single_query(
     query: str,
     expected_keywords: Optional[list[str]] = None,
@@ -235,7 +297,9 @@ async def evaluate_single_query(
         }
         每个 mode 包含：chunks_count, top_score, avg_score, sources,
             retrieval_time_ms, rerank_time_ms, generation_time_ms, total_time_ms,
-            answer_length, citation_count, answer, keyword_hits
+            answer_length, citation_count, answer, keyword_hits, judge
+        其中 judge 为 LLM-as-judge 评分：relevance/faithfulness (1-5)、
+            hallucination (bool)、reason (str)；无 RAG 模式 faithfulness 为 None
     """
     keywords = expected_keywords or []
     multi_turn_query = await build_multi_turn_query(query, history or [])
@@ -265,6 +329,9 @@ async def evaluate_single_query(
             gen_time=gen_time,
             keywords=keywords,
         )
+        result["modes"]["rag_with_reranker"]["judge"] = await _judge_answer(
+            query, answer, context
+        )
     except Exception as e:
         logger.error(f"rag_with_reranker 评估失败: {e}", exc_info=True)
         result["modes"]["rag_with_reranker"] = {"error": str(e)}
@@ -285,6 +352,9 @@ async def evaluate_single_query(
             gen_time=gen_time,
             keywords=keywords,
         )
+        result["modes"]["rag_without_reranker"]["judge"] = await _judge_answer(
+            query, answer, context
+        )
     except Exception as e:
         logger.error(f"rag_without_reranker 评估失败: {e}", exc_info=True)
         result["modes"]["rag_without_reranker"] = {"error": str(e)}
@@ -302,6 +372,8 @@ async def evaluate_single_query(
             gen_time=gen_time,
             keywords=keywords,
         )
+        # 无 RAG 模式没有参考资料，只评相关性，忠实度为 null
+        result["modes"]["no_rag"]["judge"] = await _judge_answer(query, answer, None)
     except Exception as e:
         logger.error(f"no_rag 评估失败: {e}", exc_info=True)
         result["modes"]["no_rag"] = {"error": str(e)}
@@ -431,6 +503,35 @@ def print_evaluation_report(result: dict) -> None:
             print(f"{h.get('hit_rate', 0):.2%}".ljust(18), end="")
     print()
 
+    # LLM-as-judge 评分
+    def _judge_val(mn, key):
+        data = modes.get(mn, {})
+        if "error" in data:
+            return "ERROR"
+        j = data.get("judge") or {}
+        v = j.get(key)
+        return "-" if v is None else str(v)
+
+    print(f"{'相关性评分(1-5)':<16}", end="")
+    for mn in mode_names:
+        print(f"{_judge_val(mn, 'relevance'):<18}", end="")
+    print()
+    print(f"{'忠实度评分(1-5)':<16}", end="")
+    for mn in mode_names:
+        print(f"{_judge_val(mn, 'faithfulness'):<18}", end="")
+    print()
+    print(f"{'幻觉标记':<18}", end="")
+    for mn in mode_names:
+        print(f"{_judge_val(mn, 'hallucination'):<18}", end="")
+    print()
+
+    # judge 一句话理由
+    for mn, ml in zip(mode_names, mode_labels):
+        data = modes.get(mn, {})
+        j = data.get("judge")
+        if j and j.get("reason"):
+            print(f"  [{ml}] {j['reason'][:70]}")
+
     # 各模式回答内容（截断显示）
     for mn, ml in zip(mode_names, mode_labels):
         data = modes.get(mn, {})
@@ -485,12 +586,37 @@ def print_batch_summary(results: list[dict]) -> None:
         print(f"  平均引用编号数:   {avg('citation_count'):.2f}")
         print(f"  平均关键词命中率: {avg_hit:.2%}")
 
+        # LLM-as-judge 平均分
+        judged = [
+            r["judge"]
+            for r in valid
+            if isinstance(r.get("judge"), dict) and r["judge"].get("relevance") is not None
+        ]
+        if judged:
+            n_j = len(judged)
+            avg_rel = sum(j["relevance"] for j in judged) / n_j
+            print(f"  平均相关性评分:   {avg_rel:.2f} / 5")
+            faith_scores = [
+                j["faithfulness"] for j in judged if j.get("faithfulness") is not None
+            ]
+            if faith_scores:
+                print(
+                    f"  平均忠实度评分:   {sum(faith_scores) / len(faith_scores):.2f} / 5"
+                )
+            hallucinated = sum(1 for j in judged if j.get("hallucination"))
+            print(f"  幻觉回答数:       {hallucinated} / {n_j}")
+
     print("\n" + "#" * 90 + "\n")
 
 
 # ── 示例：直接运行本模块即可查看评估结果 ──────────────────────────────
-async def _demo():
-    """示例：用一组测试查询对比三种模式"""
+async def _demo(rounds: int = 3):
+    """
+    示例：用一组测试查询对比三种模式，重复多轮后取平均值
+
+    Args:
+        rounds: 重复轮数（同一组查询跑多遍，汇总时自动取平均）
+    """
     test_queries = [
         {
             "query": "龙猫的伞那篇文章讲了什么？",
@@ -506,12 +632,17 @@ async def _demo():
         },
     ]
 
-    results = await evaluate_batch(test_queries)
+    all_results = []
+    for i in range(rounds):
+        logger.warning(f"── 第 {i + 1}/{rounds} 轮评估 ──")
+        all_results.extend(await evaluate_batch(test_queries))
 
-    for r in results:
+    # 单查询详情只打印第一轮，避免多轮重复刷屏
+    for r in all_results[: len(test_queries)]:
         print_evaluation_report(r)
 
-    print_batch_summary(results)
+    print(f">>> 以下为 {rounds} 轮 x {len(test_queries)} 个查询的平均结果 <<<")
+    print_batch_summary(all_results)
 
 
 if __name__ == "__main__":
