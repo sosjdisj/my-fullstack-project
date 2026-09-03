@@ -26,6 +26,8 @@ import re
 import time
 from typing import Optional
 
+from bson import ObjectId
+
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_ollama import ChatOllama
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -121,6 +123,9 @@ async def _vector_recall(
         article_id = payload.get("article_id")
         if not article_id:
             continue
+        # Qdrant payload 中是字符串，MongoDB _id 是 ObjectId，需转换后才能查到
+        if isinstance(article_id, str) and ObjectId.is_valid(article_id):
+            article_id = ObjectId(article_id)
         article = await db.articles.find_one({"_id": article_id})
         if not article:
             continue
@@ -488,16 +493,16 @@ async def _demo():
     """示例：用一组测试查询对比三种模式"""
     test_queries = [
         {
-            "query": "博客里有哪些关于 Vue 的文章？",
-            "expected_keywords": ["Vue"],
+            "query": "龙猫的伞那篇文章讲了什么？",
+            "expected_keywords": ["龙猫", "伞"],
         },
         {
-            "query": "RAG 是什么？有什么用？",
-            "expected_keywords": ["RAG", "检索"],
+            "query": "博客里有哪些关于美食治愈的文章？",
+            "expected_keywords": ["热汤", "菜市场"],
         },
         {
-            "query": "项目用到了哪些技术栈？",
-            "expected_keywords": [],
+            "query": "作者是怎么看遗憾这件事的？",
+            "expected_keywords": ["遗憾", "成长"],
         },
     ]
 
