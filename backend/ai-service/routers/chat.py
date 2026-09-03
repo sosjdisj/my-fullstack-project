@@ -125,5 +125,7 @@ async def chat_stream(request: ChatRequest):
                 "event": "error",
                 "data": json.dumps({"error": str(e)}, ensure_ascii=False),
             }
-
+    #EventSourceResponse(event_generator()) 
+    # 把 Python 异步生成器“包装”成一个符合 SSE 标准的长连接 HTTP 流式响应，
+    # 让前端可以用 EventSource API 轻松、实时地接收 AI 逐字输出的内容。
     return EventSourceResponse(event_generator())

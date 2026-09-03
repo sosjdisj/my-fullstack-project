@@ -66,7 +66,7 @@ def _format_tool_list(tools: list[BaseTool], indent: int = 2) -> str:
     for t in tools:
         params = ""
         if t.args_schema:
-            schema = t.args_schema.schema()
+            schema = t.args_schema.model_json_schema()
             properties = schema.get("properties", {})
             required = schema.get("required", [])
             param_parts = []
@@ -260,7 +260,7 @@ class ReActAgent:
         """过滤掉工具签名中不存在的参数，避免 TypeError"""
         if not tool.args_schema:
             return args
-        schema = tool.args_schema.schema()
+        schema = tool.args_schema.model_json_schema()
         accepted = set(schema.get("properties", {}).keys())
         return {k: v for k, v in args.items() if k in accepted}
 

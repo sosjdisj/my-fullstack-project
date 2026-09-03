@@ -100,11 +100,16 @@ public class ChatController {
         chatService.assertConversationOwnedByUser(id, auth.getUserId());
 
         SseEmitter emitter = new SseEmitter(120_000L);
-
+        
+        // 开启新线程异步调用 AI 服务，避免阻塞主线程
         CompletableFuture.runAsync(() -> {
             try {
+                // 创建一个可变字符串容器，用来拼接 AI 服务返回的完整回复内容
                 StringBuilder fullResponse = new StringBuilder();
+                // 创建一个 Java 自带的 HTTP 客户端
                 HttpClient client = HttpClient.newHttpClient();
+                // 构建请求体，包含对话话 ID、消息内容、用户 ID
+                // 注意：这里使用 JSON 格式，与 AI 服务的接口文档保持一致
                 String requestBody = new ObjectMapper().writeValueAsString(Map.of(
                     "conversation_id", id,
                     "message", message,
