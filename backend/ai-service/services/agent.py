@@ -45,7 +45,7 @@ TOOL_GROUPS = [
 react_agent = ReActAgent(tools=all_tools, tool_groups=TOOL_GROUPS)
 
 
-def _convert_history(messages: list[dict]) -> list[BaseMessage]:
+def convert_history(messages: list[dict]) -> list[BaseMessage]:
     """将消息字典列表转换为 LangChain 消息对象列表"""
     result = []
     for msg in messages:
@@ -80,7 +80,7 @@ async def run_agent_stream(
     Raises:
         Exception: Agent 执行失败时抛出
     """
-    history_messages = _convert_history(chat_history or [])
+    history_messages = convert_history(chat_history or [])
     async for chunk in react_agent.run_stream(
         user_input=user_input,
         chat_history=history_messages,
