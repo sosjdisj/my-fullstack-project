@@ -2,12 +2,9 @@
     <div class="sidebar-panel">
         <h3>公告</h3>
         <div class="p-div">
-            <p>本项目github & gitee 开源地址：
-                https://github.com/kuailemao/Ruyu-Blog
-                https://gitee.com/kuailemao/ruyu-blog</p>
-            <p>项目部署文档：https://kuailemao.xyz/article/48</p>
-            <p>文档独立站点：http://docs.kuailemao.xyz/</p>
-            <p>qq交流群：635887836</p>
+            <p>欢迎来到我的个人博客！这是一个基于 Vue 3 + Spring Boot + Python AI 的全栈项目。</p>
+            <p>集成 RAG 知识库问答、Agent 工具调用与微前端音乐播放器。</p>
+            <p>本项目为个人学习与作品展示用途，本地运行即可体验完整功能。</p>
             <p>欢迎指出网站的不足，给我提供意见。</p>
         </div>
     </div>
