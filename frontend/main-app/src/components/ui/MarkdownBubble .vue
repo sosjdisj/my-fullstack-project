@@ -81,10 +81,9 @@
             font-style: italic;
         }
 
-        // 行内代码 - 毛玻璃风格
+        // 行内代码 - 半透明背景（不用 backdrop-filter，避免选区重绘风暴）
         :deep(code) {
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(4px);
             padding: 2px 6px;
             border-radius: 4px;
             font-family: 'Fira Code', 'Consolas', monospace;
@@ -93,11 +92,9 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        // 代码块 - 毛玻璃风格
+        // 代码块 - 半透明背景
         :deep(pre) {
             background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
             padding: 16px;
             border-radius: 12px;
             overflow-x: auto;
@@ -109,19 +106,17 @@
                 background: transparent;
                 padding: 0;
                 border: none;
-                backdrop-filter: none;
                 color: #d4d4d4;
                 font-size: 14px;
                 line-height: 1.6;
             }
         }
 
-        // 引用块 - 毛玻璃风格
+        // 引用块 - 半透明背景
         :deep(blockquote) {
             margin: 12px 0;
             padding: 12px 16px;
             background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(8px);
             border-left: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 0 8px 8px 0;
             color: #c0c0c0;
@@ -131,13 +126,12 @@
             }
         }
 
-        // 表格 - 毛玻璃风格
+        // 表格 - 半透明背景
         :deep(table) {
             width: 100%;
             border-collapse: collapse;
             margin: 12px 0;
             background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(8px);
             border-radius: 8px;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.08);

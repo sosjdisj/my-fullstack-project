@@ -44,6 +44,19 @@
                         <ChatLineRound />
                     </el-icon>
                     <span class="item-text">{{ item.title }}</span>
+                    <el-dropdown class="item-more" trigger="click"
+                        @command="(cmd: string) => handleMoreCommand(item.id, cmd)">
+                        <span class="more-trigger" @click.stop>
+                            <el-icon>
+                                <MoreFilled />
+                            </el-icon>
+                        </span>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item command="delete">删除对话</el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
                 </div>
             </div>
         </aside>
@@ -60,11 +73,6 @@
                         </el-icon>
                     </div>
                     <h2>有什么我可以帮你的？</h2>
-                    <div>
-                        <span v-for="tag in tags" :key="tag" class="pill-tag" @click="handleTag(tag)">
-                            {{ tag }}
-                        </span>
-                    </div>
                 </div>
 
                 <div v-else class="message-flow">
@@ -114,11 +122,26 @@
     import MarkdownBubble from '@/components/ui/MarkdownBubble .vue';
     import { useAiChat } from '@/views/AiChat/useAiChat'
 
-    const { isCollapsed, inputVal, isLoading, messages, handleSend, tags,
+    const { isCollapsed, inputVal, isLoading, messages, handleSend,
         shouldShowLoadMoreObserver, isChatting, conversations, conversationId,
         handleNewChat, setLoadMoreContainerRefWrapper, handleTag, selectConversation,
-        fetchConversations, clear, chatContainer
+        fetchConversations, clear, chatContainer, handleDeleteConversation
     } = useAiChat()
+
+    // 三个点菜单命令：删除前二次确认
+    const handleMoreCommand = async (id: string, command: string) => {
+        if (command !== 'delete') return
+        try {
+            await ElMessageBox.confirm('删除后该对话及聊天记录将无法恢复', '删除对话', {
+                confirmButtonText: '删除',
+                cancelButtonText: '取消',
+                type: 'warning',
+            })
+        } catch {
+            return // 用户取消
+        }
+        handleDeleteConversation(id)
+    }
 
     const chatContainerRef = ref<HTMLElement | null>(null)
 
@@ -168,8 +191,8 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            backdrop-filter: blur(5px) saturate(120%);
-            -webkit-backdrop-filter: blur(5px) saturate(120%);
+            // 不用全屏 backdrop-filter：选区变化会触发整屏重绘风暴（Chromium 卡死问题）
+            // 模糊效果改由壁纸图片自身的 filter 承担
             background: rgba(0, 0, 0, 0.4);
         }
 
@@ -185,6 +208,9 @@
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
+                // 静态图用一次性 filter 模糊，替代 backdrop-filter，不随选区重绘
+                filter: blur(5px) saturate(120%);
+                transform: scale(1.05); // 放大遮住模糊后的边缘露白
             }
         }
 
@@ -337,6 +363,35 @@
                         white-space: nowrap; // 确保历史记录标题也不换行
                     }
 
+                    .item-more {
+                        margin-left: auto; // 靠右对齐
+                        flex-shrink: 0;
+                        opacity: 0; // 默认隐藏，hover 时淡入（DeepSeek 风格）
+                        transition: opacity 0.2s;
+
+                        .more-trigger {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 24px;
+                            height: 24px;
+                            border-radius: 6px;
+                            color: #a0a0a0;
+                            cursor: pointer;
+                            outline: none;
+
+                            &:hover {
+                                background: rgba(255, 255, 255, 0.1);
+                                color: #fff;
+                            }
+                        }
+                    }
+
+                    &:hover .item-more,
+                    &.active .item-more {
+                        opacity: 1;
+                    }
+
                     &:hover {
                         background: rgba(255, 255, 255, 0.05);
                         color: #fff;
@@ -397,24 +452,6 @@
                         color: #ccc;
                         backdrop-filter: blur(10px);
                         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-                    }
-
-                    .pill-tag {
-                        display: inline-block;
-                        padding: 6px 16px;
-                        border-radius: 20px;
-                        border: 1px solid rgba(255, 255, 255, 0.05);
-                        margin: 5px;
-                        cursor: pointer;
-                        font-size: 13px;
-                        color: #888;
-                        transition: 0.3s;
-
-                        &:hover {
-                            border-color: rgba(255, 255, 255, 0.2);
-                            color: #fff;
-                            background: rgba(255, 255, 255, 0.03);
-                        }
                     }
                 }
 
