@@ -216,31 +216,8 @@ async def rebuild_chunks_for_article(article_id: str) -> int:
     return len(points)
 
 
-async def rebuild_all_chunks() -> int:
-    """
-    重建所有文章的文本块索引
-
-    Returns:
-        成功索引的文本块总数
-    """
-    db = _get_mongo_db()
-    articles = db.articles.find({})
-    total = 0
-    async for article in articles:
-        article_id = str(article["_id"])
-        count = await rebuild_chunks_for_article(article_id)
-        total += count
-        logger.info(f"Rebuilt {count} chunks for article {article_id}")
-    return total
-
-
-async def init_rag_knowledge_base():
-    """
-    初始化 RAG 知识库，创建向量集合并索引所有文章
-
-    Returns:
-        索引的文本块总数
-    """
+async def _ensure_collection():
+    """确保 Qdrant 集合与 payload 索引存在（仅在重建知识库时调用）"""
     try:
         vector_size = await get_embedding_vector_size()
     except Exception as e:
@@ -273,6 +250,21 @@ async def init_rag_knowledge_base():
     except Exception as e:
         logger.warning(f"Payload index creation skipped: {e}")
 
-    total = await rebuild_all_chunks()
-    logger.info(f"Knowledge base initialized with {total} chunks")
+
+async def rebuild_all_chunks() -> int:
+    """
+    重建所有文章的文本块索引（手动触发，不在启动时自动执行）
+
+    Returns:
+        成功索引的文本块总数
+    """
+    await _ensure_collection()
+    db = _get_mongo_db()
+    articles = db.articles.find({})
+    total = 0
+    async for article in articles:
+        article_id = str(article["_id"])
+        count = await rebuild_chunks_for_article(article_id)
+        total += count
+        logger.info(f"Rebuilt {count} chunks for article {article_id}")
     return total

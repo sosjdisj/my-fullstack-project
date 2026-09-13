@@ -10,7 +10,6 @@ from middleware.security import IpWhitelistMiddleware
 from routers.chat import router as chat_router
 from routers.conversations import router as conversations_router
 from routers.system import router as system_router
-from services.article_chunk import init_rag_knowledge_base
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -18,16 +17,13 @@ logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """FastAPI 应用生命周期管理，启动时初始化知识库，关闭时清理资源"""
+    """FastAPI 应用生命周期管理。
+    """
     logger.info("AI Service starting up...")
-    try:
-        total = await init_rag_knowledge_base()
-        logger.info(f"RAG knowledge base initialized with {total} chunks")
-    except Exception as e:
-        logger.warning(
-            f"RAG knowledge base initialization failed: {e}. "
-            "Service will start without pre-loaded knowledge."
-        )
+    logger.info(
+        "RAG knowledge base is not rebuilt on startup; "
+        "call POST /api/ai/knowledge/rebuild to rebuild it manually."
+    )
     yield
     logger.info("AI Service shutting down...")
 
