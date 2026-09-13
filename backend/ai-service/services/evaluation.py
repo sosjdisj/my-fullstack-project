@@ -410,29 +410,36 @@ def _build_mode_result(
     }
 
 
-async def evaluate_batch(queries: list[dict]) -> list[dict]:
+async def evaluate_batch(
+    queries: list[dict], concurrency: int = 5
+) -> list[dict]:
     """
-    批量评估多个查询
+    批量评估多个查询（并发执行，结果顺序与输入一致）
 
     Args:
         queries: 查询列表，每个元素格式：
             {"query": str, "expected_keywords": list[str], "history": list[dict]}
             其中 expected_keywords 和 history 可选
+        concurrency: 并发数，5 为 LLM API 限流与本地模型负载的平衡点
 
     Returns:
-        评估结果列表
+        评估结果列表（与 queries 顺序一致）
     """
-    results = []
     total = len(queries)
-    for i, q in enumerate(queries, 1):
-        logger.info(f"评估进度: {i}/{total} - {q.get('query', '')[:50]}")
-        result = await evaluate_single_query(
-            query=q["query"],
-            expected_keywords=q.get("expected_keywords"),
-            history=q.get("history"),
-        )
-        results.append(result)
-    return results
+    semaphore = asyncio.Semaphore(concurrency)
+
+    async def _run(index: int, q: dict) -> dict:
+        async with semaphore:
+            logger.info(f"评估进度: {index}/{total} - {q.get('query', '')[:50]}")
+            return await evaluate_single_query(
+                query=q["query"],
+                expected_keywords=q.get("expected_keywords"),
+                history=q.get("history"),
+            )
+
+    return list(
+        await asyncio.gather(*(_run(i, q) for i, q in enumerate(queries, 1)))
+    )
 
 
 def print_evaluation_report(result: dict) -> None:
@@ -610,39 +617,53 @@ def print_batch_summary(results: list[dict]) -> None:
     print("\n" + "#" * 90 + "\n")
 
 
+# ── 评估查询集：基于博客真实文章出题 ──────────────────────────────
+# expected_keywords 为高质量回答中应出现的关键词（来自文章标题/主题），
+# 命中率与 LLM-as-judge 评分互为印证
+EVAL_QUERIES = [
+    # 直接内容题
+    {"query": "龙猫的伞那篇文章讲了什么？", "expected_keywords": ["龙猫", "伞"]},
+    {"query": "雨天的书店那篇文章写了什么？", "expected_keywords": ["书店", "雨天"]},
+    {"query": "'放过自己'这篇文章说了什么？", "expected_keywords": ["中年", "放过自己"]},
+    {"query": "一碗热汤为什么能治愈委屈？", "expected_keywords": ["热汤", "委屈"]},
+    {"query": "动漫经典台词反向翻译为什么离谱？", "expected_keywords": ["台词", "翻译"]},
+    {"query": "异世界主角拿到现实的剧本会怎样？", "expected_keywords": ["异世界", "剧本"]},
+    # 主题/观点题
+    {"query": "作者是怎么看遗憾这件事的？", "expected_keywords": ["遗憾", "成长"]},
+    {"query": "作者为什么觉得路边野花值得被认真看见？", "expected_keywords": ["野花"]},
+    {"query": "什么样的关系是最好的关系？", "expected_keywords": ["不用刻意"]},
+    {"query": "慢一点的日子是什么味道？作者怎么写的？", "expected_keywords": ["慢", "日子"]},
+    {"query": "那些'无用的小事'指的是什么？", "expected_keywords": ["无用", "小事"]},
+    {"query": "快乐为什么是可以自己给的？", "expected_keywords": ["快乐"]},
+    {"query": "作者重看《龙猫》有什么感想？", "expected_keywords": ["龙猫", "伞"]},
+    {"query": "长大后活成'路人甲'是什么感受？", "expected_keywords": ["路人甲"]},
+    {"query": "FuFuture.cn 的动漫风是怎么解读的？", "expected_keywords": ["FuFuture", "动漫"]},
+    # 跨文章归纳题
+    {"query": "博客里有哪些关于美食治愈的内容？", "expected_keywords": ["热汤", "菜市场"]},
+    {"query": "博客里关于'温柔'的文章都写了什么？", "expected_keywords": ["温柔"]},
+    {"query": "博客里有哪些写到菜市场的内容？", "expected_keywords": ["菜市场"]},
+]
+
+
 # ── 示例：直接运行本模块即可查看评估结果 ──────────────────────────────
-async def _demo(rounds: int = 3):
+async def _demo(rounds: int = 1):
     """
-    示例：用一组测试查询对比三种模式，重复多轮后取平均值
+    示例：用评估查询集对比三种模式，可重复多轮后取平均值
 
     Args:
-        rounds: 重复轮数（同一组查询跑多遍，汇总时自动取平均）
+        rounds: 重复轮数（temperature=0 时重复轮差异极小，默认 1 轮即可；
+            同一查询跑多遍主要用于观察波动）
     """
-    test_queries = [
-        {
-            "query": "龙猫的伞那篇文章讲了什么？",
-            "expected_keywords": ["龙猫", "伞"],
-        },
-        {
-            "query": "博客里有哪些关于美食治愈的文章？",
-            "expected_keywords": ["热汤", "菜市场"],
-        },
-        {
-            "query": "作者是怎么看遗憾这件事的？",
-            "expected_keywords": ["遗憾", "成长"],
-        },
-    ]
-
     all_results = []
     for i in range(rounds):
         logger.warning(f"── 第 {i + 1}/{rounds} 轮评估 ──")
-        all_results.extend(await evaluate_batch(test_queries))
+        all_results.extend(await evaluate_batch(EVAL_QUERIES))
 
     # 单查询详情只打印第一轮，避免多轮重复刷屏
-    for r in all_results[: len(test_queries)]:
+    for r in all_results[: len(EVAL_QUERIES)]:
         print_evaluation_report(r)
 
-    print(f">>> 以下为 {rounds} 轮 x {len(test_queries)} 个查询的平均结果 <<<")
+    print(f">>> 以下为 {rounds} 轮 x {len(EVAL_QUERIES)} 个查询的平均结果 <<<")
     print_batch_summary(all_results)
 
 
