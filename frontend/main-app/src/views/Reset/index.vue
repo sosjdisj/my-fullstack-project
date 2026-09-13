@@ -2,7 +2,7 @@
     <div class="reset-page">
 
         <div class="bg-image">
-            <img src="/src/assets/18390764516330880.jpg" alt="">
+            <img src="/images/18390764516330880.jpg" alt="">
         </div>
 
         <div class="reset-card">

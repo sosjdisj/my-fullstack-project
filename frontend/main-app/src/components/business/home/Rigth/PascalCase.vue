@@ -1,7 +1,7 @@
 <template>
     <div class="right-one-card" v-if="LoginStatus">
         <div class="header-section">
-            <img src="/src/assets/1.webp" alt="" class="backgroundImg">
+            <img src="/images/1.webp" alt="" class="backgroundImg">
             <div class="overlay"></div>
 
             <div class="avatar-wrapper">

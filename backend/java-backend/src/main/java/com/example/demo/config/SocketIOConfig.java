@@ -49,7 +49,12 @@ public class SocketIOConfig implements CommandLineRunner {
             @Override
             public AuthorizationResult getAuthorizationResult(HandshakeData data) {
                 String origin = data.getHttpHeaders().get("Origin");
-                if (origin == null || !originWhitelist.contains(origin)) {
+                // 同源轮询 GET 握手不携带 Origin（浏览器标准行为，生产同源部署即此场景），放行；
+                // 携带 Origin 的请求（跨域/WebSocket 升级）仍强制白名单
+                if (origin == null) {
+                    return new AuthorizationResult(true);
+                }
+                if (!originWhitelist.contains(origin)) {
                     return new AuthorizationResult(false);
                 }
                 List<String> tokenParams = data.getUrlParams().get("token");

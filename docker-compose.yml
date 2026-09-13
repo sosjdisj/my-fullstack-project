@@ -21,8 +21,9 @@ services:
       retries: 12
       start_period: 30s
     # 仅映射到本机回环便于调试，公网部署可删除
+    # 宿主机用 13306：本机 MySQL 服务已占用 3306
     ports:
-      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:13306:3306"
 
   mongo:
     image: mongo:7

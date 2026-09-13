@@ -1,7 +1,7 @@
 <template>
     <div class="ai-page">
         <div class="wallpaper">
-            <img src="/src/assets/18390764516330880.jpg" alt="">
+            <img src="/images/18390764516330880.jpg" alt="">
         </div>
 
         <aside :class="['sidebar-glass', { collapsed: isCollapsed }]">

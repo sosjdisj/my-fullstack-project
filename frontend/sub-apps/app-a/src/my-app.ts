@@ -52,8 +52,11 @@ let el: HTMLElement | null = null
 // 封装 mount 逻辑
 const mount = (props?: any) => {
     const pinia = createPinia()
-    // 优先使用 micro-app 提供的基础路由，也就是我在主应用写的baseroute
-    const base = window.__MICRO_APP_BASE_ROUTE__ || '/musicPlayer'
+    // 路由 base 必须等于子应用真实的 URL 前缀：iframe 沙箱内 location 就是
+    // 子应用自身部署路径（dev='/'，Docker 构建 --base=/app-a/ → '/app-a/'）。
+    // 不能用主应用注入的 baseroute（/musicPlayer，那是父应用路由路径），
+    // 否则 /app-a/ 剥不掉 /musicPlayer 前缀，路由匹配不到页面 → 白屏且无报错
+    const base = import.meta.env.BASE_URL || '/'
 
     history = createWebHistory(base)
     router = createRouter({
