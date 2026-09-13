@@ -8,6 +8,7 @@ from tools.categories_tools import categories_tools
 from tools.interaction_tools import interaction_tools
 from tools.playlists_tools import playlists_tools
 from tools.quotes_tools import quotes_tools
+from tools.rag_tools import rag_tools
 from tools.songs_tools import songs_tools
 from tools.tags_tools import tags_tools
 from tools.timeline_tools import timeline_tools
@@ -25,12 +26,15 @@ all_tools = (
     + treehole_tools
     + quotes_tools
     + interaction_tools
+    + rag_tools
 )
 
 # 工具按业务域分组，用于生成更清晰的 System Prompt
 # 分组只影响提示词呈现，不改变工具的注册和调用逻辑
 TOOL_GROUPS = [
     ("文章检索", article_tools),
+    # 与"文章检索"相邻呈现，帮助模型区分"找文章列表"与"问文章内容"
+    ("博客知识库（文章正文问答）", rag_tools),
     ("音乐与歌单", songs_tools + playlists_tools),
     ("标签与分类", tags_tools + categories_tools),
     ("社区动态", timeline_tools + treehole_tools + quotes_tools),
