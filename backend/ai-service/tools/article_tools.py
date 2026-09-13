@@ -4,6 +4,7 @@ import httpx
 from langchain_core.tools import tool
 
 import config
+from tools.java_api import extract_data, extract_list
 
 JAVA_URL = config.JAVA_BACKEND_URL
 
@@ -16,19 +17,15 @@ async def search_articles(keyword: str, page: int = 1, size: int = 10) -> str:
             f"{JAVA_URL}/api/search",
             params={"keyword": keyword, "page": page, "size": size},
         )
-        data = resp.json()
-        inner = data.get("data")
-        # 防御性检查：确保 inner 是字典，否则安全降级
-        if not isinstance(inner, dict):
-            inner = {}
-        articles = inner.get("articles", [])
+        payload = resp.json()
+        # /api/search 的 data 为分页对象 {total, size, page, list: [...]}
         clean_data = [
             {"title": a.get("title"), "content": a.get("content")}
-            for a in articles
+            for a in extract_list(payload)
             if isinstance(a, dict)
         ]
         return json.dumps({
-            "total": inner.get("total", 0),
+            "total": extract_data(payload).get("total", 0),
             "articles": clean_data,
         }, ensure_ascii=False)
 
@@ -41,13 +38,9 @@ async def get_article_titles(keyword: str) -> str:
             f"{JAVA_URL}/api/search/titles",
             params={"keyword": keyword},
         )
-        data = resp.json()
-        inner = data.get("data")
-        if not isinstance(inner, dict):
-            inner = {}
-        titles = inner.get("titles", [])
+        # /api/search/titles 的 data 直接是标题字符串数组
         return json.dumps({
-            "titles": titles,
+            "titles": extract_list(resp.json()),
         }, ensure_ascii=False)
 
 

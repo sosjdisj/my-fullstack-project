@@ -4,6 +4,7 @@ import httpx
 from langchain_core.tools import tool
 
 import config
+from tools.java_api import extract_data, extract_list
 
 JAVA_URL = config.JAVA_BACKEND_URL
 
@@ -16,14 +17,21 @@ async def get_music_charts(tag_names: str = "") -> str:
         params["tagNames"] = tag_names
     async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.get(f"{JAVA_URL}/api/songs/charts", params=params)
-        data = resp.json()
-        songs = data.get("data") or {}.get("songs", [])
-        clean_data = [
-            {"name": s.get("name"), "artist": s.get("artist"), "tag": s.get("tag")}
-            for s in songs
-        ]
+        # /api/songs/charts 的 data 以标签名为键：{"华语": {"songs": [...], ...}, ...}
+        # 拍平成统一的歌曲列表，附上所属榜单标签
+        songs = []
+        for chart in extract_data(resp.json()).values():
+            if not isinstance(chart, dict):
+                continue
+            for s in chart.get("songs") or []:
+                if isinstance(s, dict):
+                    songs.append({
+                        "name": s.get("name"),
+                        "artist": s.get("artist"),
+                        "tag": s.get("tag") or chart.get("tagName"),
+                    })
         return json.dumps({
-            "songs": clean_data,
+            "songs": songs,
         }, ensure_ascii=False)
 
 
@@ -35,11 +43,9 @@ async def get_user_liked_songs(token: str = "") -> str:
         headers["Authorization"] = f"Bearer {token}"
     async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
         resp = await client.get(f"{JAVA_URL}/api/songs", headers=headers)
-        data = resp.json()
-        songs = data.get("data") or {}.get("songs", [])
         clean_data = [
             {"name": s.get("name"), "artist": s.get("artist")}
-            for s in songs
+            for s in extract_list(resp.json())
         ]
         return json.dumps({
             "liked_songs": clean_data,

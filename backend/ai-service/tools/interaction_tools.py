@@ -230,7 +230,7 @@ async def get_playlist_collect_status(playlist_id: str, token: str = "") -> str:
             headers=headers,
         )
         data = resp.json()
-        is_collected = data.get("data") or {}.get("isCollected", False)
+        is_collected = (data.get("data") or {}).get("isCollected", False)
         return json.dumps({
             "playlist_id": playlist_id,
             "is_collected": is_collected,

@@ -99,7 +99,9 @@ public class ChatController {
         // 校验会话归属，防止向他人会话发送消息
         chatService.assertConversationOwnedByUser(id, auth.getUserId());
 
-        SseEmitter emitter = new SseEmitter(120_000L);
+        // SSE 总超时：Agent 多轮工具调用期间前端收不到 token，
+        // 工具轮次 + 最终回答可能超过 2 分钟，给足余量避免流被中途掐断
+        SseEmitter emitter = new SseEmitter(600_000L);
         
         // 开启新线程异步调用 AI 服务，避免阻塞主线程
         CompletableFuture.runAsync(() -> {
@@ -145,6 +147,12 @@ public class ChatController {
                                 emitter.send(SseEmitter.event().data(mapper.writeValueAsString(
                                         Map.of("type", "done"))));
                             }
+                            // 处理 title 事件 → 转换为前端约定的 {type:"title", content} 格式
+                            else if (dataMap.containsKey("title")) {
+                                String title = String.valueOf(dataMap.get("title"));
+                                emitter.send(SseEmitter.event().data(mapper.writeValueAsString(
+                                        Map.of("type", "title", "content", title))));
+                            }
                             // 处理 error 事件 → 转换为前端约定的 {type:"error", content} 格式
                             else if (dataMap.containsKey("error")) {
                                 String errorMsg = String.valueOf(dataMap.get("error"));
@@ -179,6 +187,14 @@ public class ChatController {
         });
 
         return emitter;
+    }
+
+    /** 删除指定对话及其全部消息 */
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteConversation(@PathVariable String id, HttpServletRequest request) {
+        JwtUtil.UserInfo auth = getAuth(request);
+        chatService.deleteConversation(id, auth.getUserId());
+        return ApiResponse.success("删除对话成功");
     }
 
     /** 从请求中获取登录用户信息，未登录则抛出异常 */
