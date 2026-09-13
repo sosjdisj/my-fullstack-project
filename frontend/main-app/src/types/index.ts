@@ -1,21 +1,16 @@
-export type FormField = 'username' | 'password' | 'confirmpassword' | 'email' | 'phone';
+export type FormField = 'username' | 'password' | 'confirmpassword' | 'email' | 'account';
 
 export interface LoginResult {
     username?: string | undefined
     password?: string | undefined
     confirmpassword?: string | undefined
-    phone?: string | undefined
     email?: string | undefined
-}
-
-export interface LoginFormData {
-    username: string // 用户名/邮箱
-    password: string // 密码
+    account?: string | undefined
 }
 
 export interface Mark {
     username: string,
-    phone: string,
+    email: string,
     signature: string,
     cover: string | null
 }
@@ -46,6 +41,13 @@ export interface ArticleNeighbor {
     title: string,
 }
 
+export interface RandomArticle {
+    id: string,
+    title: string,
+    cover: string,
+    published: string,
+}
+
 export interface ArticleComment {
     _id: number;
     username: string;
@@ -62,7 +64,7 @@ export interface TimelineList {
 }
 
 export interface DanmakusList {
-    _id: string,
+    id: string,
     content: string,
     userId: number
     avatar: string

@@ -15,16 +15,18 @@ export function useRegister() {
     username: '',
     password: '',
     confirmpassword: '',
-    phone: ''
+    email: ''
   })
-
-  const captchaCode = ref('')
 
   const { errors, updateField, navigateWithClearErrors,
     hasNoErrors } = useFormValidation(Register)
 
   const handUpdataUsername = (newValue: string) => {
     updateField('username', newValue)
+  }
+
+  const handUpdataEmail = (newValue: string) => {
+    updateField('email', newValue)
   }
 
   const handUpdataPassword = (newValue: string) => {
@@ -35,57 +37,42 @@ export function useRegister() {
     updateField('confirmpassword', newValue)
   }
 
-  const handUpdataPhone = (newValue: string) => {
-    updateField('phone', newValue)
-  }
-
   const checkPassword = (fieldName: any) => {
     validateField(fieldName, Register)
   }
+
+  const isLoading = ref(false)
 
   const GoregisterUser = async () => {
     const result = validateLogin(Register)
     handleValidationResult(result)
 
     if (hasNoErrors()) {
-      const hashedPassword = await sha256(Register.password)
-      const registerPayload = {
-        username: Register.username,
-        password: hashedPassword,
-        phone: Register.phone,
-        code: captchaCode.value,
+      isLoading.value = true
+      try {
+        const hashedPassword = await sha256(Register.password)
+        const registerPayload = {
+          username: Register.username,
+          password: hashedPassword,
+          email: Register.email,
+        }
+        const result = await post('/auth/register', registerPayload)
+
+        if (result.success) {
+          const { username, avatar, token } = result.data.data
+
+          saveUserInfo(store, {
+            username,
+            avatar,
+            token
+          })
+
+          ElMessage.success(result.message)
+          router.replace('/home')
+        }
+      } finally {
+        isLoading.value = false
       }
-      const result = await post('/auth/register', registerPayload)
-
-      if (result.success) {
-        const { username, avatar, token } = result.data.data
-
-        saveUserInfo(store, {
-          username,
-          avatar,
-          token
-        })
-
-        ElMessage.success(result.message)
-        router.replace('/home')
-      }
-    }
-  }
-
-  const sendCaptcha = async (countdownCallback: () => void) => {
-    if (!Register.phone) {
-      ElMessage.warning('请先输入手机号')
-      return
-    }
-
-    try {
-      const result = await post('/sendCode', { phone: Register.phone })
-      if (result.success) {
-        ElMessage.success('验证码已发送')
-        countdownCallback()
-      }
-    } catch (error) {
-      ElMessage.error('验证码发送失败，请稍后重试')
     }
   }
 
@@ -95,15 +82,14 @@ export function useRegister() {
 
   return {
     errors,
-    captchaCode,
     Register,
+    isLoading,
     checkPassword,
     GoregisterUser,
     Torouter,
-    sendCaptcha,
     handUpdataUsername,
+    handUpdataEmail,
     handUpdataPassword,
     handUpdataConfirmPassword,
-    handUpdataPhone,
   }
 }

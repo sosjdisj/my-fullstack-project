@@ -8,16 +8,14 @@ export function useReset() {
   const router = useRouter()
 
   const ResetData = reactive({
-    phone: '',
+    email: '',
     password: ''
   })
 
-  const smsCode = ref('')
-
   const { errors, updateField, navigateWithClearErrors, hasNoErrors } = useFormValidation(ResetData)
 
-  const handUpdataPhone = (newValue: string) => {
-    updateField('phone', newValue)
+  const handUpdataEmail = (newValue: string) => {
+    updateField('email', newValue)
   }
 
   const handUpdataPassword = (newValue: string) => {
@@ -32,22 +30,7 @@ export function useReset() {
     navigateWithClearErrors('/login')
   }
 
-  const sendCaptcha = async (countdownCallback: () => void) => {
-    if (!ResetData.phone) {
-      ElMessage.warning('请先输入手机号')
-      return
-    }
-
-    try {
-      const result = await post('/sendCode', { phone: ResetData.phone })
-      if (result.success) {
-        ElMessage.success('验证码已发送')
-        countdownCallback()
-      }
-    } catch (error) {
-      ElMessage.error('验证码发送失败，请稍后重试')
-    }
-  }
+  const isLoading = ref(false)
 
   const handleReset = async () => {
     const result = validateLogin(ResetData)
@@ -55,28 +38,31 @@ export function useReset() {
 
     if (!hasNoErrors()) return
 
-    const hashedPassword = await sha256(ResetData.password)
-    const resetPayload = {
-      phone: ResetData.phone,
-      password: hashedPassword,
-      code: smsCode.value
-    }
-    const response = await post('/auth/reset-password', resetPayload)
+    isLoading.value = true
+    try {
+      const hashedPassword = await sha256(ResetData.password)
+      const resetPayload = {
+        email: ResetData.email,
+        password: hashedPassword
+      }
+      const response = await post('/auth/reset-password', resetPayload)
 
-    if (response.success) {
-      ElMessage.success(response.message)
-      router.replace('/login')
+      if (response.success) {
+        ElMessage.success(response.message)
+        router.replace('/login')
+      }
+    } finally {
+      isLoading.value = false
     }
   }
 
   return {
     errors,
-    smsCode,
-    handUpdataPhone,
+    isLoading,
+    handUpdataEmail,
     handUpdataPassword,
     checkField,
     Torouter,
-    handleReset,
-    sendCaptcha
+    handleReset
   }
 }

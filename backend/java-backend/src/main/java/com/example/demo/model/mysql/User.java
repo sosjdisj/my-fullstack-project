@@ -37,8 +37,8 @@ public class User {
     @TableField("account_status")
     private AccountStatus accountStatus;
 
-    @TableField("phone")
-    private String phone;
+    @TableField("email")
+    private String email;
 
     @TableLogic
     @TableField("deleted")

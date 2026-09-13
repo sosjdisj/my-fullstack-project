@@ -12,8 +12,8 @@
             </div>
 
             <div class="input-item">
-                <label>手机号</label>
-                <input type="text" class="glass-input" v-model="props.initialData.phone" placeholder="绑定你的手机号">
+                <label>邮箱</label>
+                <input type="text" class="glass-input" v-model="props.initialData.email" placeholder="绑定你的邮箱">
             </div>
 
             <div class="input-item">

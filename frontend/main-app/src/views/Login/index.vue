@@ -8,8 +8,8 @@
         <div class="login-right">
             <form class="login-right-top" @submit.prevent="handleLogin">
                 <h3 class="login-right-h3">登录</h3>
-                <FormInput @update-form-field="handUpdataUsername" @hand-check="checkPassword" :errors="errors"
-                    updata="username" placeholder="用户名" />
+                <FormInput @update-form-field="handUpdataAccount" @hand-check="checkPassword" :errors="errors"
+                    updata="account" placeholder="用户名 / 邮箱" />
 
                 <FormInput @update-form-field="handUpdataPassword" @hand-check="checkPassword" :errors="errors"
                     updata="password" placeholder="密码" type="password" />
@@ -24,7 +24,10 @@
                 </div>
 
                 <div class="button-group">
-                    <button type="submit" class="btn btn-primary">立即登录</button>
+                    <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                        <GlassSpinner v-if="isLoading" />
+                        {{ isLoading ? '登录中...' : '立即登录' }}
+                    </button>
                     <button type="button" class="btn btn-secondary" @click="ToregisterUser('/register')">
                         立即注册
                     </button>
@@ -37,9 +40,10 @@
 
 <script setup lang="ts">
     import FormInput from '@/components/ui/FormInput.vue';
+    import GlassSpinner from '@/components/ui/GlassSpinner.vue';
     import { useLogin } from './useLogin';
 
-    const { errors, handUpdataUsername, handUpdataPassword, ToregisterUser, checkPassword, handleLogin } = useLogin()
+    const { errors, isLoading, handUpdataAccount, handUpdataPassword, ToregisterUser, checkPassword, handleLogin } = useLogin()
 
 </script>
 
@@ -152,6 +156,15 @@
                         transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
                         position: relative;
                         overflow: hidden;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+
+                        &:disabled {
+                            pointer-events: none;
+                            opacity: 0.7;
+                        }
 
                         &:active {
                             transform: scale(0.98); // 点击时的缩放反馈

@@ -7,7 +7,7 @@ const errors: LoginResult = reactive({
     password: '',
     confirmpassword: '',
     email: '',
-    phone: ''
+    account: ''
 })
 
 // 定时器存储
@@ -16,7 +16,7 @@ const timers: Record<keyof LoginResult, number | null> = {
     password: null,
     confirmpassword: null,
     email: null,
-    phone: null
+    account: null
 }
 
 // 密码验证规则配置
@@ -25,12 +25,6 @@ const PASSWORD_CONFIG = {
     maxLength: 20,
     pattern: /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,20}$/,
     specialChars: '!@#$%^&*'
-}
-
-// 手机号验证规则配置
-const PHONE_CONFIG = {
-    pattern: /^1[3-9]\d{9}$/,
-    length: 11
 }
 
 export function getPasswordErrorMsg(password: string): string | null {
@@ -53,23 +47,14 @@ export function getPasswordErrorMsg(password: string): string | null {
     return null
 }
 
-export function validatePhone(phone: string): string | null {
-    if (!phone) {
-        return '手机号不能为空'
+export function validateEmail(email: string): string | null {
+    if (!email) {
+        return '邮箱不能为空'
     }
 
-    const trimmedPhone = phone.trim()
-
-    if (!/^\d+$/.test(trimmedPhone)) {
-        return '手机号只能包含数字'
-    }
-
-    if (trimmedPhone.length !== PHONE_CONFIG.length) {
-        return `手机号必须为${PHONE_CONFIG.length}位数字`
-    }
-
-    if (!PHONE_CONFIG.pattern.test(trimmedPhone)) {
-        return '手机号格式不正确，请输入有效的11位手机号'
+    const emailReg = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    if (!emailReg.test(email)) {
+        return '邮箱格式不正确，示例：user@example.com'
     }
 
     return null
@@ -84,6 +69,10 @@ export function validateUsername(username: string): string | null {
         return '用户名不能包含首尾空格'
     }
 
+    if (username.includes('@')) {
+        return '用户名不能包含 @ 符号'
+    }
+
     if (/^\d+$/.test(username)) {
         return '用户名不能全为数字'
     }
@@ -95,21 +84,29 @@ export function validateUsername(username: string): string | null {
     return null
 }
 
+/** 登录账号校验：支持用户名或邮箱，含 @ 按邮箱规则校验 */
+export function validateAccount(account: string): string | null {
+    if (!account) {
+        return '账号不能为空'
+    }
+    return account.includes('@') ? validateEmail(account) : validateUsername(account)
+}
+
 export function validateLogin(LoginData: {
     username?: string
     password?: string
-    phone?: string
     confirmpassword?: string
     email?: string
+    account?: string
 }): LoginResult {
-    const { username, password, phone, confirmpassword, email } = LoginData
+    const { username, password, confirmpassword, email, account } = LoginData
 
     const result: LoginResult = {
         username: '',
         password: '',
         confirmpassword: '',
         email: '',
-        phone: ''
+        account: ''
     }
 
     if (username !== undefined) {
@@ -117,14 +114,14 @@ export function validateLogin(LoginData: {
         if (error) result.username = error
     }
 
+    if (account !== undefined) {
+        const error = validateAccount(account)
+        if (error) result.account = error
+    }
+
     if (password !== undefined) {
         const error = getPasswordErrorMsg(password)
         if (error) result.password = error
-    }
-
-    if (phone !== undefined) {
-        const error = validatePhone(phone)
-        if (error) result.phone = error
     }
 
     if (confirmpassword !== undefined) {
@@ -137,28 +134,11 @@ export function validateLogin(LoginData: {
     }
 
     if (email !== undefined) {
-        if (!email) {
-            result.email = '邮箱不能为空'
-        } else {
-            const emailReg = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-            if (!emailReg.test(email)) {
-                result.email = '邮箱格式不正确，示例：user@example.com'
-            }
-        }
+        const error = validateEmail(email)
+        if (error) result.email = error
     }
 
     return result
-}
-
-export function isLoginDataValid(loginData: {
-    username?: string
-    password?: string
-    phone?: string
-    confirmpassword?: string
-    email?: string
-}): boolean {
-    const result = validateLogin(loginData)
-    return Object.keys(result).length === 0
 }
 
 export function handleValidationResult(result: LoginResult) {

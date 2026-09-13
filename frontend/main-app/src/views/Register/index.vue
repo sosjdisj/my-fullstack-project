@@ -13,19 +13,19 @@
                 <FormInput @update-form-field="handUpdataUsername" @hand-check="checkPassword" :errors="errors"
                     updata="username" placeholder="用户名" />
 
-                <FormInput @update-form-field="handUpdataPhone" @hand-check="checkPassword" :errors="errors"
-                    updata="phone" placeholder="手机号" />
+                <FormInput @update-form-field="handUpdataEmail" @hand-check="checkPassword" :errors="errors"
+                    updata="email" placeholder="邮箱" />
                 <FormInput @update-form-field="handUpdataPassword" @hand-check="checkPassword" :errors="errors"
                     updata="password" placeholder="设置密码" />
 
                 <FormInput @update-form-field="handUpdataConfirmPassword" @hand-check="checkPassword" :errors="errors"
                     updata="confirmpassword" placeholder="确认密码" />
-
-                <!-- 验证码按钮和输入框组件 -->
-                <CaptchaInput v-model="captchaCode" @send="sendCaptcha" />
             </div>
 
-            <button type="submit" class="submit-btn">立即注册</button>
+            <button type="submit" class="submit-btn" :disabled="isLoading">
+                <GlassSpinner v-if="isLoading" />
+                {{ isLoading ? '注册中...' : '立即注册' }}
+            </button>
 
             <div class="footer-links">
                 <p class="hint-text">已有账号？</p>
@@ -38,12 +38,12 @@
 
 <script setup lang="ts">
     import FormInput from '@/components/ui/FormInput.vue';
-    import CaptchaInput from '@/components/ui/CaptchaInput.vue';
+    import GlassSpinner from '@/components/ui/GlassSpinner.vue';
     import { useRegister } from './useRegister';
 
-    const { errors, captchaCode, checkPassword, GoregisterUser, Torouter,
-        handUpdataUsername, handUpdataPassword, handUpdataConfirmPassword,
-        handUpdataPhone, sendCaptcha } = useRegister()
+    const { errors, isLoading, checkPassword, GoregisterUser, Torouter,
+        handUpdataUsername, handUpdataEmail, handUpdataPassword,
+        handUpdataConfirmPassword } = useRegister()
 
 </script>
 
@@ -107,6 +107,15 @@
                 background: linear-gradient(135deg, @accent-pink 0%, @accent-coral 100%);
                 box-shadow: 0 4px 15px rgba(244, 114, 182, 0.3);
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+
+                &:disabled {
+                    pointer-events: none;
+                    opacity: 0.7;
+                }
 
                 &:hover {
                     transform: translateY(-2px);

@@ -12,14 +12,14 @@ export function useLogin() {
   const store = useUserStore()
 
   const LoginData = reactive({
-    username: '',
+    account: '',
     password: ''
   })
 
   const { errors, updateField, navigateWithClearErrors, hasNoErrors } = useFormValidation((LoginData))
 
-  const handUpdataUsername = (newValue: string) => {
-    updateField('username', newValue)
+  const handUpdataAccount = (newValue: string) => {
+    updateField('account', newValue)
   }
 
   const handUpdataPassword = (newValue: string) => {
@@ -34,38 +34,46 @@ export function useLogin() {
     validateField(fieldName, LoginData)
   }
 
+  const isLoading = ref(false)
+
   const handleLogin = async () => {
     const result = validateLogin(LoginData)
     handleValidationResult(result)
 
     if (!hasNoErrors()) return
 
-    const hashedPassword = await sha256(LoginData.password)
-    const loginPayload = {
-      username: LoginData.username,
-      password: hashedPassword
-    }
-    const bool = await post('/auth/login', loginPayload)
-    if (bool.success) {
-      const { username, avatar, token } = bool.data.data
+    isLoading.value = true
+    try {
+      const hashedPassword = await sha256(LoginData.password)
+      const loginPayload = {
+        account: LoginData.account,
+        password: hashedPassword
+      }
+      const bool = await post('/auth/login', loginPayload)
+      if (bool.success) {
+        const { username, avatar, token } = bool.data.data
 
-      saveUserInfo(store, {
-        username,
-        avatar,
-        token
-      })
+        saveUserInfo(store, {
+          username,
+          avatar,
+          token
+        })
 
-      ElMessage.success(bool.message)
-      // 登录成功后优先跳回原目标页面，无 redirect 时回首页
-      const redirect = (route.query.redirect as string) || '/home'
-      router.replace(redirect)
+        ElMessage.success(bool.message)
+        // 登录成功后优先跳回原目标页面，无 redirect 时回首页
+        const redirect = (route.query.redirect as string) || '/home'
+        router.replace(redirect)
+      }
+    } finally {
+      isLoading.value = false
     }
   }
 
   return {
     LoginData,
     errors,
-    handUpdataUsername,
+    isLoading,
+    handUpdataAccount,
     handUpdataPassword,
     ToregisterUser,
     checkPassword,

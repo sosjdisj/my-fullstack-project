@@ -4,9 +4,9 @@ import com.example.demo.common.ApiResponse;
 import com.example.demo.common.BusinessException;
 import com.example.demo.common.JwtUtil;
 import com.example.demo.common.JwtUtil.UserInfo;
+import com.example.demo.common.ValidationUtil;
 import com.example.demo.model.mysql.User;
 import com.example.demo.service.AuthService;
-import com.example.demo.service.SendCodeService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,22 +35,19 @@ public class AuthController {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    @Autowired
-    private SendCodeService sendCodeService;
-
     @Value("${cookie.secure:false}")
     private boolean cookieSecure;
 
-    /** 用户登录，校验账号密码并返回访问令牌 */
+    /** 用户登录，支持用户名或邮箱 + 密码，校验通过后返回访问令牌 */
     @PostMapping("/login")
     public ApiResponse<Map<String, Object>> login(@RequestBody Map<String, String> body, HttpServletResponse response) {
-        String username = body.get("username");
+        String account = body.get("account");
         String password = body.get("password");
-        if (username == null || username.isBlank() || password == null || password.isBlank()) {
-            throw new BusinessException(400, "用户名和密码不能为空");
+        if (account == null || account.isBlank() || password == null || password.isBlank()) {
+            throw new BusinessException(400, "账号和密码不能为空");
         }
 
-        User user = authService.verifyLogin(username, password);
+        User user = authService.verifyLogin(account, password);
 
         // 检查Redis缓存中是否已有有效token
         String cacheKey = "user:token:" + user.getUserId();
@@ -95,46 +92,26 @@ public class AuthController {
         return ApiResponse.success("登录成功", data);
     }
 
-    /** 用户注册，校验短信验证码后创建账号并返回访问令牌 */
+    /** 用户注册，校验邮箱唯一性后创建账号并返回访问令牌 */
     @PostMapping("/register")
     public ApiResponse<Map<String, Object>> register(@RequestBody Map<String, String> body, HttpServletResponse response) {
         String username = body.get("username");
         String password = body.get("password");
-        String phone = body.get("phone");
-        String code = body.get("code");
+        String email = body.get("email");
 
-        if (username == null || username.isBlank()) {
-            throw new BusinessException(400, "用户名不能为空");
-        }
         if (password == null || password.isBlank()) {
             throw new BusinessException(400, "密码不能为空");
         }
-        if (phone == null || phone.isBlank()) {
-            throw new BusinessException(400, "手机号不能为空");
-        }
-        if (code == null || code.isBlank()) {
-            throw new BusinessException(400, "验证码不能为空");
-        }
+        ValidationUtil.checkUsername(username);
+        ValidationUtil.checkEmail(email);
 
-        // 检查手机号是否已注册
-        if (authService.checkPhoneExists(phone)) {
-            throw new BusinessException(400, "该手机号已注册");
-        }
-
-        // 验证验证码
-        SendCodeService.CodeItem codeItem = sendCodeService.getCode(phone);
-        if (codeItem == null) {
-            throw new BusinessException(400, "验证码不存在或已过期");
-        }
-        if (!codeItem.getCode().equals(code)) {
-            throw new BusinessException(400, "验证码错误");
+        // 检查邮箱是否已注册
+        if (authService.checkEmailExists(email)) {
+            throw new BusinessException(400, "该邮箱已注册");
         }
 
         // 注册用户
-        User user = authService.registerUser(username, password, phone);
-
-        // 清理验证码缓存
-        sendCodeService.removeCode(phone);
+        User user = authService.registerUser(username, password, email);
 
         // 生成token
         JwtUtil.TokenPair pair = jwtUtil.generateTokenPair(user.getUserId(), user.getUsername(),
@@ -155,42 +132,24 @@ public class AuthController {
         return ApiResponse.success("注册成功", data);
     }
 
-    /** 重置密码，校验短信验证码后更新密码 */
+    /** 重置密码，校验邮箱已注册后更新密码 */
     @PostMapping("/reset-password")
     public ApiResponse<Void> resetPassword(@RequestBody Map<String, String> body) {
-        String phone = body.get("phone");
+        String email = body.get("email");
         String password = body.get("password");
-        String code = body.get("code");
 
-        if (phone == null || phone.isBlank()) {
-            throw new BusinessException(400, "手机号不能为空");
-        }
         if (password == null || password.isBlank()) {
             throw new BusinessException(400, "密码不能为空");
         }
-        if (code == null || code.isBlank()) {
-            throw new BusinessException(400, "验证码不能为空");
-        }
+        ValidationUtil.checkEmail(email);
 
-        // 重置密码要求手机号已注册
-        if (!authService.checkPhoneExists(phone)) {
-            throw new BusinessException(400, "该手机号未注册");
-        }
-
-        // 验证验证码
-        SendCodeService.CodeItem codeItem = sendCodeService.getCode(phone);
-        if (codeItem == null) {
-            throw new BusinessException(400, "验证码不存在或已过期");
-        }
-        if (!codeItem.getCode().equals(code)) {
-            throw new BusinessException(400, "验证码错误");
+        // 重置密码要求邮箱已注册
+        if (!authService.checkEmailExists(email)) {
+            throw new BusinessException(400, "该邮箱未注册");
         }
 
         // 更新密码
-        authService.resetPassword(phone, password);
-
-        // 清理验证码缓存
-        sendCodeService.removeCode(phone);
+        authService.resetPassword(email, password);
 
         return ApiResponse.success("密码重置成功", null);
     }

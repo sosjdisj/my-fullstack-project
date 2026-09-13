@@ -60,7 +60,7 @@ public class ProfileService {
         result.put("username", user.getUsername());
         result.put("signature", user.getSignature());
         result.put("cover", user.getCover());
-        result.put("phone", user.getPhone());
+        result.put("email", user.getEmail());
         result.put("publishTime", user.getPublishTime());
         result.put("updateTime", user.getUpdateTime());
         return result;
@@ -80,8 +80,8 @@ public class ProfileService {
             if (updateData.containsKey("signature")) {
                 user.setSignature(updateData.get("signature"));
             }
-            if (updateData.containsKey("phone")) {
-                user.setPhone(updateData.get("phone"));
+            if (updateData.containsKey("email")) {
+                user.setEmail(updateData.get("email"));
             }
         }
 

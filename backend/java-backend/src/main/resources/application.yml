@@ -79,14 +79,6 @@ upload:
   dir: ${UPLOAD_DIR:D:/图片}
   base-url: ${UPLOAD_BASE_URL:http://localhost:3001}
 
-# 阿里云短信配置
-aliyun:
-  sms:
-    access-key-id:
-    access-key-secret:
-    sign-name: 个人博客验证码
-    template-code: SMS_332535108
-
 # Python AI 服务配置
 ai-service:
   url: http://localhost:8000

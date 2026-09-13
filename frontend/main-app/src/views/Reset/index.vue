@@ -8,23 +8,23 @@
         <div class="reset-card">
             <div class="reset-header">
                 <h3 class="active-title">重置密码</h3>
-                <p class="subtitle">我们将向您的注册手机号发送验证码</p>
+                <p class="subtitle">输入注册邮箱和新密码即可重置</p>
             </div>
 
             <form class="reset-form" @submit.prevent="handleReset">
                 <div class="input-group">
                     <!-- 输入框组件 -->
-                    <FormInput @update-form-field="handUpdataPhone" @hand-check="checkField" :errors="errors"
-                        updata="phone" placeholder="手机号" />
+                    <FormInput @update-form-field="handUpdataEmail" @hand-check="checkField" :errors="errors"
+                        updata="email" placeholder="注册邮箱" />
 
                     <FormInput @update-form-field="handUpdataPassword" @hand-check="checkField" :errors="errors"
                         updata="password" placeholder="新密码" type="password" />
-
-                    <!-- 验证码按钮和输入框组件 -->
-                    <CaptchaInput v-model="smsCode" @send="sendCaptcha" />
                 </div>
 
-                <button type="submit" class="submit-btn">确认重置</button>
+                <button type="submit" class="submit-btn" :disabled="isLoading">
+                    <GlassSpinner v-if="isLoading" />
+                    {{ isLoading ? '重置中...' : '确认重置' }}
+                </button>
 
                 <div class="back-footer">
                     <p class="hint-text">想起密码了？</p>
@@ -38,10 +38,10 @@
 
 <script setup lang="ts">
     import FormInput from '@/components/ui/FormInput.vue';
-    import CaptchaInput from '@/components/ui/CaptchaInput.vue';
+    import GlassSpinner from '@/components/ui/GlassSpinner.vue';
     import { useReset } from './useReset';
 
-    const { errors, smsCode, handUpdataPhone, handUpdataPassword, checkField, Torouter, handleReset, sendCaptcha } = useReset()
+    const { errors, isLoading, handUpdataEmail, handUpdataPassword, checkField, Torouter, handleReset } = useReset()
 
 </script>
 
@@ -118,6 +118,15 @@
                     background: linear-gradient(135deg, @accent-pink 0%, @accent-coral 100%);
                     box-shadow: 0 4px 15px rgba(244, 114, 182, 0.3);
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+
+                    &:disabled {
+                        pointer-events: none;
+                        opacity: 0.7;
+                    }
 
                     &:hover {
                         transform: translateY(-2px);

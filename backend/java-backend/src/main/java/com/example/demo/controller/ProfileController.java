@@ -37,19 +37,19 @@ public class ProfileController {
     public ApiResponse<Map<String, Object>> updateProfile(
             @RequestParam(value = "username", required = false) String username,
             @RequestParam(value = "signature", required = false) String signature,
-            @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "email", required = false) String email,
             @RequestParam(value = "avatar", required = false) MultipartFile avatar,
             HttpServletRequest request) {
         JwtUtil.UserInfo auth = getAuth(request);
 
         ValidationUtil.checkOptionalLength(username, 20, "用户名");
-        ValidationUtil.checkOptionalPhone(phone);
+        ValidationUtil.checkOptionalEmail(email);
         ValidationUtil.checkOptionalLength(signature, 100, "个人简介");
 
         Map<String, String> updateData = new HashMap<>();
         if (username != null) updateData.put("username", username);
         if (signature != null) updateData.put("signature", signature);
-        if (phone != null) updateData.put("phone", phone);
+        if (email != null) updateData.put("email", email);
 
         Map<String, Object> profile = profileService.updateProfile(auth.getUserId(), updateData, avatar);
         return ApiResponse.success("更新个人信息成功", profile);
