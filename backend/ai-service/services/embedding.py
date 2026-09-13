@@ -1,9 +1,10 @@
+import asyncio
 import hashlib
 import json
 import logging
 
-from langchain_ollama import OllamaEmbeddings
 from redis import Redis
+from sentence_transformers import SentenceTransformer
 
 import config
 
@@ -11,10 +12,22 @@ logger = logging.getLogger(__name__)
 
 redis_client = Redis.from_url(config.REDIS_URL, decode_responses=True)
 
-embeddings = OllamaEmbeddings(
-    model=config.OLLAMA_EMBEDDING_MODEL,
-    base_url=config.OLLAMA_BASE_URL,
-)
+# 懒加载：模型首次调用时在独立线程中加载，避免 import 时同步加载
+# 阻塞事件循环，也让服务重启更快
+embedding_model = None
+_model_load_lock = asyncio.Lock()
+
+
+def _load_model():
+    global embedding_model
+    if embedding_model is None:
+        embedding_model = SentenceTransformer(config.EMBEDDING_MODEL)
+    return embedding_model
+
+
+async def _get_model():
+    async with _model_load_lock:
+        return await asyncio.to_thread(_load_model)
 
 
 def _cache_key(text: str) -> str:
@@ -25,7 +38,7 @@ def _cache_key(text: str) -> str:
 
 async def embed_text(text: str) -> list[float]:
     """
-    将单个文本转换为嵌入向量
+    将单个文本转换为嵌入向量（查询侧，带 query prompt）
 
     Args:
         text: 要嵌入的文本内容
@@ -41,7 +54,9 @@ async def embed_text(text: str) -> list[float]:
     except Exception as e:
         logger.warning(f"Redis cache read failed: {e}")
 
-    result = await embeddings.aembed_query(text)
+    # encode 是 CPU 密集的同步调用，放线程池执行，避免阻塞事件循环
+    model = await _get_model()
+    result = (await asyncio.to_thread(model.encode, text, prompt_name="query")).tolist()
 
     try:
         redis_client.setex(cache_key, config.EMBEDDING_CACHE_TTL, json.dumps(result))
@@ -53,7 +68,7 @@ async def embed_text(text: str) -> list[float]:
 
 async def embed_texts(texts: list[str]) -> list[list[float]]:
     """
-    批量将多个文本转换为嵌入向量
+    批量将多个文本转换为嵌入向量（文档侧，带 document prompt）
 
     Args:
         texts: 要嵌入的文本列表
@@ -79,9 +94,13 @@ async def embed_texts(texts: list[str]) -> list[list[float]]:
         uncached_texts.append(text)
 
     if uncached_texts:
-        new_embeddings = await embeddings.aembed_documents(uncached_texts)
+        # encode 是 CPU 密集的同步调用，放线程池执行，避免阻塞事件循环
+        model = await _get_model()
+        new_embeddings = await asyncio.to_thread(
+            model.encode, uncached_texts, prompt_name="document"
+        )
         for idx, (orig_i, text) in enumerate(zip(uncached_indices, uncached_texts)):
-            emb = new_embeddings[idx]
+            emb = new_embeddings[idx].tolist()
             results.append((orig_i, emb))
             cache_key = _cache_key(text)
             try:

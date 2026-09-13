@@ -30,7 +30,7 @@ from typing import Optional
 from bson import ObjectId
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 from motor.motor_asyncio import AsyncIOMotorClient
 from qdrant_client import QdrantClient
 
@@ -52,9 +52,10 @@ _qdrant_client = QdrantClient(
 _mongo_client: Optional[AsyncIOMotorClient] = None
 
 # 评估专用 LLM：temperature=0 保证可复现，避免 Agent/工具调用的额外耗时干扰
-_eval_llm = ChatOllama(
-    model=config.OLLAMA_CHAT_MODEL,
-    base_url=config.OLLAMA_BASE_URL,
+_eval_llm = ChatOpenAI(
+    model=config.LLM_CHAT_MODEL,
+    base_url=config.LLM_BASE_URL,
+    api_key=config.LLM_API_KEY,
     temperature=0.0,
 )
 
@@ -80,7 +81,7 @@ def _get_mongo_db():
     return _mongo_client[db_name]
 
 
-def _count_keyword_hits(answer: str, keywords: list[str]) -> dict:
+def count_keyword_hits(answer: str, keywords: list[str]) -> dict:
     """统计期望关键词在回答中的命中情况（大小写不敏感）"""
     if not keywords:
         return {"hit_count": 0, "total": 0, "hit_rate": 0.0, "hits": []}
@@ -219,7 +220,7 @@ async def _generate_answer(
     return response.content, time.perf_counter() - start
 
 
-def _parse_judge_json(text: str) -> dict:
+def parse_judge_json(text: str) -> dict:
     """解析 judge 输出的 JSON（容错处理思考标签与多余文本）"""
     cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
     match = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
@@ -234,7 +235,7 @@ def _parse_judge_json(text: str) -> dict:
     }
 
 
-async def _judge_answer(
+async def judge_answer(
     query: str, answer: str, context: Optional[str] = None
 ) -> dict:
     """
@@ -257,7 +258,7 @@ async def _judge_answer(
         response = await _eval_llm.ainvoke(
             [SystemMessage(content=_JUDGE_SYSTEM_PROMPT), HumanMessage(content=prompt)]
         )
-        return _parse_judge_json(response.content)
+        return parse_judge_json(response.content)
     except Exception as e:
         logger.warning(f"LLM 打分失败: {e}")
         return {
@@ -329,7 +330,7 @@ async def evaluate_single_query(
             gen_time=gen_time,
             keywords=keywords,
         )
-        result["modes"]["rag_with_reranker"]["judge"] = await _judge_answer(
+        result["modes"]["rag_with_reranker"]["judge"] = await judge_answer(
             query, answer, context
         )
     except Exception as e:
@@ -352,7 +353,7 @@ async def evaluate_single_query(
             gen_time=gen_time,
             keywords=keywords,
         )
-        result["modes"]["rag_without_reranker"]["judge"] = await _judge_answer(
+        result["modes"]["rag_without_reranker"]["judge"] = await judge_answer(
             query, answer, context
         )
     except Exception as e:
@@ -373,7 +374,7 @@ async def evaluate_single_query(
             keywords=keywords,
         )
         # 无 RAG 模式没有参考资料，只评相关性，忠实度为 null
-        result["modes"]["no_rag"]["judge"] = await _judge_answer(query, answer, None)
+        result["modes"]["no_rag"]["judge"] = await judge_answer(query, answer, None)
     except Exception as e:
         logger.error(f"no_rag 评估失败: {e}", exc_info=True)
         result["modes"]["no_rag"] = {"error": str(e)}
@@ -405,7 +406,7 @@ def _build_mode_result(
         "answer_length": len(answer),
         "citation_count": _count_citations(answer),
         "answer": answer,
-        "keyword_hits": _count_keyword_hits(answer, keywords),
+        "keyword_hits": count_keyword_hits(answer, keywords),
     }
 
 
