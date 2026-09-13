@@ -2,8 +2,7 @@
 
 # My Blog · 全栈博客系统
 
-> 基于 Vue 3 + Spring Boot + Python AI 的现代化全栈博客平台，集成 RAG 检索增强生成、ReAct Agent、实时通讯与微前端音乐播放器
-git status 
+> 基于 Vue 3 + Spring Boot + Python AI 的现代化全栈博客平台，集成 Agentic RAG、ReAct Agent、实时通讯与微前端音乐播放器，支持 Docker Compose 一键容器化部署
 </div>
 
 <div align="center">
@@ -22,7 +21,7 @@ git status
   <img src="https://img.shields.io/badge/Redis-缓存-dc382d?style=flat-square&logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/Qdrant-向量库-dc382d?style=flat-square" alt="Qdrant" />
   <img src="https://img.shields.io/badge/LangChain-Agent-1c3c3c?style=flat-square&logo=langchain&logoColor=white" alt="LangChain" />
-  <img src="https://img.shields.io/badge/Ollama-本地大模型-22b8cf?style=flat-square" alt="Ollama" />
+  <img src="https://img.shields.io/badge/DeepSeek-对话模型-4D6BFE?style=flat-square" alt="DeepSeek" />
   <img src="https://img.shields.io/badge/Socket.IO-实时通讯-010101?style=flat-square&logo=socket.io&logoColor=white" alt="Socket.IO" />
   <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="License" />
 </p>
@@ -31,7 +30,7 @@ git status
 
 ## 📝 项目简介
 
-**一句话定义**：一个把"博客内容创作 → AI 智能问答 → 实时互动"端到端打通的全栈项目。
+**一句话定义**：一个把"博客内容消费 → AI 智能问答 → 实时互动"端到端打通的全栈项目。
 
 **背景与解决的问题**：传统的博客系统通常只解决"内容发布"这一件事，AI 问答往往与业务数据割裂。本项目想验证一个问题——能否让 AI 助手真正"读懂"博客内容、并能主动调用业务接口回答用户问题？因此采用了 **RAG 检索增强 + ReAct Agent 工具调用** 的双轨架构，并配合多语言微服务（Java 主业务 + Python AI 服务）+ 微前端（博客主应用 + 音乐子应用）的方式落地。整个过程涉及向量检索、流式推理、实时通讯、多数据库协同等典型后端工程难题，是一份覆盖前后端完整链路的练手作品。
 
@@ -65,8 +64,7 @@ git status
 | 文档数据库 | MongoDB + Spring Data MongoDB |
 | 缓存 | Redis + Spring Data Redis |
 | 实时通讯 | Socket.IO（netty-socketio 2.0.x） |
-| 认证 | JWT（jjwt）+ BCrypt |
-| 短信 | 阿里云 SMS SDK |
+| 认证 | JWT（jjwt）+ BCrypt + Refresh Token 轮换（Redis 黑名单） |
 | 校验 | Spring Validation |
 | 工程 | Lombok |
 
@@ -75,10 +73,10 @@ git status
 | 类别 | 选型 |
 | --- | --- |
 | 框架 | FastAPI + Uvicorn |
-| AI 框架 | LangChain + LangChain Ollama |
-| 大模型 | Ollama 本地：Qwen3:8b（对话）+ embeddinggemma:300m（向量化） |
+| AI 框架 | LangChain（langchain-openai，OpenAI 兼容协议） |
+| 对话模型 | OpenAI 兼容 API（默认 DeepSeek，.env 可切换任意兼容服务） |
+| 向量化 / 重排 | sentence-transformers 本地进程内推理：google/embeddinggemma-300m（Embedding）+ cross-encoder/ms-marco-MiniLM-L-6-v2（Reranker） |
 | 向量库 | Qdrant |
-| Reranker | sentence-transformers（ms-marco-MiniLM-L-6-v2） |
 | 异步 MongoDB | Motor（Async PyMongo） |
 | 流式响应 | SSE（sse-starlette） |
 | 跨服务调用 | httpx（同步 HTTP 调用 Java REST API） |
@@ -88,13 +86,14 @@ git status
 ## ✨ 功能特性
 
 ### 内容创作与管理
-- **文章系统**：发布 / 编辑 / 分类管理 / 标签关联，支持 Markdown 渲染
+- **文章系统**：文章流 / 详情 / 随机推荐，Markdown 渲染 + 分类 / 标签归档
+- **互动体系**：文章点赞 / 收藏 / 评论（登录用户）
 - **时间轴**：按发布时间线展示历史文章
-- **搜索**：关键词搜索 + 热门标题推荐（按浏览量排序）
+- **搜索**：关键词搜索（标题正则匹配）+ 热门标题推荐（按浏览量排序）
 
 ### AI 智能助手（核心亮点）
-- **RAG 知识库问答**：基于博客内容做检索增强生成，回答"博客里写过什么"
-- **ReAct Agent 工具调用**：集成 9 种业务工具，回答"现在有哪些热门歌曲、最新文章"
+- **Agentic RAG 知识库问答**：RAG 检索封装为 Agent 工具，模型自主决定"是否检索、用什么关键词检索"，回答"博客里写过什么"
+- **ReAct Agent 工具调用**：集成 6 大业务域 27 个工具（文章、知识库、音乐、标签分类、社区动态、点赞收藏），基于原生 Function Calling，单轮并行多工具调用
 - **流式输出**：token 级别实时推送，首字延迟低
 - **多轮对话**：上下文连续 + 标题自动生成 + 历史记录游标分页
 
@@ -109,27 +108,25 @@ git status
 - 歌词文件上传（.lrc 格式）
 
 ### 用户体系
-- 注册 / 登录 / 找回密码（阿里云短信验证码）
-- JWT 双 Token（Access + Refresh）
+- 注册 / 登录（支持用户名或邮箱）/ 邮箱找回密码
+- JWT 双 Token（Access + Refresh）：Refresh Token 每次刷新自动轮换，旧 Token 进 Redis 黑名单，新 refreshToken 经 HttpOnly Cookie 下发
 - 个人中心与资料管理
 
 ---
 
 ## 🎯 项目亮点
 
-> **每条按"做了什么 + 解决什么问题"的格式说明**，避免堆砌技术名词。
-
-### 1. RAG 检索增强生成 · 让 AI 真正"读懂"博客内容
-**做了什么**：将文章按 Markdown 标题智能分块 → Ollama Embedding 向量化 → 存入 Qdrant → 检索时执行「Qdrant 粗召回 Top-20 + Reranker 精排 Top-5」两阶段流程，并拼接最近 N 轮用户问题增强上下文相关性。
-**带来的效果**：AI 助手可以基于博客真实内容回答问题，避免大模型幻觉；Reranker 精排显著提升检索准确性，多轮上下文让连续提问的回答更连贯。
+### 1. Agentic RAG · 让 AI 真正"读懂"博客内容
+**做了什么**：将文章按 Markdown 标题智能分块（超长段落滑动窗口回退）→ 本地 Embedding 模型向量化 → 存入 Qdrant；把检索封装为 Agent 的一个工具（Agentic RAG），由模型自主决定检索时机与关键词，检索时执行「Qdrant 粗召回 Top-15（相似度阈值预过滤）→ Reranker 融合精排（Reranker 70% + 原始分数 30%）取 Top-5」两阶段流程，并拼接最近 3 轮用户问题增强上下文相关性。
+**带来的效果**：AI 助手基于博客真实内容回答问题，避免大模型幻觉；"模型自主检索"让闲聊不触发检索、内容问题自动改写关键词重试，检索命中更准、调用更省。
 
 ### 2. ReAct Agent 架构 · 让 AI 主动调用业务接口
-**做了什么**：基于 LangChain 构建 ReAct（Reasoning + Acting）Agent，集成 9 种业务工具（文章搜索、分类/标签列表、歌曲排行榜、歌单推荐、树洞、每日名言等），支持单轮并行调用多个工具，最多 5 轮推理收敛。
-**带来的效果**：AI 助手不仅会"读"，还会"做"——能直接查询当前热门歌曲、最新文章、用户互动数据，把静态博客变成可对话、可查询的智能站点。
+**做了什么**：基于 LangChain 原生 Function Calling 构建 ReAct（Reasoning + Acting）Agent，集成 27 个业务工具（文章搜索、知识库问答、歌曲排行榜、歌单、标签/分类、时间轴、树洞、每日名言、点赞/收藏等），支持单轮并行调用多个工具，最多 5 轮推理收敛，超轮次强制总结兜底。
+**带来的效果**：AI 助手不仅会"读"，还会"做"——能直接查询当前热门歌曲、最新文章、用户互动数据，甚至帮登录用户点赞收藏，把静态博客变成可对话、可操作的智能站点。
 
-### 3. Redis 五层缓存 + 降级容错 · 性能与稳定性兼顾
-**做了什么**：构建 Embedding / RAG 检索结果 / Reranker Embedding / 对话历史 / Token 共五层 Redis 缓存（如 Embedding 缓存用 SHA-256 前 16 位防碰撞），并设计降级策略——Redis 异常时自动回退到直接计算。
-**带来的效果**：避免重复调用 Ollama 与 Reranker 模型，显著降低响应延迟；即便缓存层故障，核心流程依然可用，不会被基础设施异常拖垮。
+### 3. 多层 Redis 缓存 + 降级容错 · 性能与稳定性兼顾
+**做了什么**：构建多层 Redis 缓存——Embedding 向量缓存（SHA-256 文本哈希作键，天然去重，TTL 24h）、RAG 检索结果缓存（TTL 1h）、Java 侧 Token 缓存与 Refresh Token 黑名单，并设计降级策略——Redis 异常时自动回退到直接计算。
+**带来的效果**：避免重复执行本地模型推理与向量检索，显著降低响应延迟；即便缓存层故障，核心流程依然可用，不会被基础设施异常拖垮。
 
 ### 4. 三数据库协同 + 多语言微服务 · 复杂业务的真实工程实践
 **做了什么**：MongoDB 存文档（文章 / 评论 / 树洞）、MySQL 存关系型用户数据、Qdrant 存向量；Java（Spring Boot）负责主业务、Python（FastAPI）负责 AI，二者通过 HTTP 同步调用 + SSE 流式推送协作。
@@ -143,28 +140,31 @@ git status
 **做了什么**：AI 回答用 SSE 流式推送（@microsoft/fetch-event-source + sse-starlette），实时互动用 Socket.IO（在线人数、阅读房间、弹幕）。
 **带来的效果**：AI 回答像 ChatGPT 一样逐字出现，首字延迟低；阅读文章时能看到"还有谁在同时看这篇文章"，强化社区感。
 
+### 7. Docker Compose 容器化 · 8 服务一键编排
+**做了什么**：为前后端服务编写 Dockerfile（多阶段构建、依赖层缓存优化），用 Docker Compose 编排 8 个服务：MySQL / MongoDB / Redis / Qdrant / Java 后端 / Python AI 服务 / 博客主应用 / 音乐子应用；配置 healthcheck + 依赖启动顺序、数据卷持久化、`mysql-init.sql` 首次启动自动建库建表导入数据，前端由 nginx 统一托管并同源反向代理 API、Socket.IO 与子应用。
+**带来的效果**：`docker compose up -d --build` 一条命令拉起整套系统，环境一致、开箱即用；健康检查保证服务按依赖顺序就绪，数据落卷重启不丢。
+
 ---
 
 ## 📸 功能展示
 
-> 以下为各核心模块的截图占位，建议录制 GIF 或上传演示视频以增强展示效果。
+1.**首页**
+![alt text](image.png)
 
-| 模块 | 展示内容建议 |
-| --- | --- |
-| 🏠 首页 | 文章流 + 右侧信息面板（热门标签、随机文章、数字时钟）的整体布局 |
-| 📖 文章详情 | Markdown 渲染 + 评论 + 点赞收藏 + "X 人正在阅读"实时读者数 |
-| 🤖 AI 助手 | ReAct Agent 推理过程 + 流式输出 + 工具调用结果展示 |
-| 🎵 音乐播放器 | 歌单列表 + LRC 歌词同步滚动 + 播放控制 |
-| 🕳️ 树洞弹幕 | 玻璃拟态 UI + 弹幕浮动动画 |
-| ⏱️ 时间轴 | 按时间线展示历史文章 |
-| 🔐 登录注册 | 短信验证码 + 表单校验交互 |
+2.**AI助手页面**
+![alt text](<image1.png>)
 
-<!-- 建议在此处插入 GIF 或截图，例如：
+3.**对话**
+![alt text](image-2.png)
 
-![首页演示](docs/demo-home.gif)
-![AI 对话演示](docs/demo-ai-chat.gif)
--->
+4.**树洞弹幕**
+![alt text](image-3.png)
 
+5.**文章详情**
+![alt text](image-5.png)
+
+6.**时间轴**
+![alt text](image-4.png)
 ---
 
 ## 🚀 快速开始
@@ -178,11 +178,11 @@ git status
 | Node.js | `>= 20.19.0` | 前端构建 |
 | Java | `24` | Java 后端运行 |
 | Python | `>= 3.12` | Python AI 服务 |
-| MongoDB | 最新稳定版 | 文档型数据存储（需开启 Replica Set 模式以支持事务） |
+| MongoDB | 7.x | 文档型数据存储（文章 / 评论 / AI 对话 / 树洞） |
 | MySQL | 8.x | 关系型用户数据 |
 | Redis | 最新稳定版 | 多层缓存 |
-| Ollama | 最新版 | 本地大模型（Qwen3:8b + embeddinggemma:300m） |
-| Qdrant | 最新版 | 向量检索（可选，缺失则 AI 检索功能不可用） |
+| Qdrant | 最新版 | 向量检索 |
+| Docker + Docker Compose | 最新版 | 一键容器化部署（可选） |
 
 ### 1. 克隆仓库
 
@@ -194,21 +194,18 @@ cd my-fullstack-project
 ### 2. 配置环境变量
 
 ```bash
-# Java 后端（application.yml 已含默认值，仅需覆盖差异项）
-cp backend/java-backend/.env.example backend/java-backend/.env
-
-# Python AI 服务
+# Python AI 服务（对话模型 API Key、Qdrant / MongoDB / Redis 地址等）
 cp backend/ai-service/.env.example backend/ai-service/.env
 ```
 
-> 按各 `.env.example` 中的注释填写 MongoDB URI、MySQL 密码、JWT Secret、阿里云短信配置等。AI 服务所需的 Ollama 与 Qdrant 地址也在此配置。
+- **Python AI 服务**：在 `.env` 中填入 `LLM_API_KEY`（对话模型走 OpenAI 兼容 API，默认 DeepSeek，可切换任意兼容服务），其余连接地址按注释填写。
+- **Java 后端**：[application.yml](backend/java-backend/src/main/resources/application.yml) 已含本地默认值；MySQL 密码与 JWT Secret 放在同目录的 `application-local.yml`（`local` profile 已默认激活，该文件含密钥请勿提交到 Git）。
+- **前端**：[main-app/.env](frontend/main-app/.env) 已包含本地默认值（API / Socket 地址），开箱即用。
 
-### 3. 拉取本地 AI 模型（可选，AI 功能所需）
+### 3. AI 模型说明（无需手动拉取）
 
-```bash
-ollama pull qwen3:8b
-ollama pull embeddinggemma:300m
-```
+- **对话模型**：走 API 调用，在 `.env` 填入 `LLM_API_KEY` 即可。
+- **Embedding / Reranker 模型**：本地 sentence-transformers 进程内加载（首次调用自动从 HuggingFace 下载并缓存），国内可设置 `HF_ENDPOINT=https://hf-mirror.com` 加速下载。
 
 ### 4. 安装依赖
 
@@ -231,7 +228,7 @@ cd ../../..
 ### 5. 启动开发服务器
 
 ```bash
-# 一键启动（每个服务独立窗口，关闭窗口即停止该服务）
+# 一键启动（每个服务独立窗口，关闭窗口即停止该服务；需 MongoDB / Redis / Qdrant 已在本地运行）
 start.bat
 
 # 或分别启动
@@ -262,6 +259,15 @@ cd backend/java-backend && ./mvnw package                         # macOS / Linu
 cd backend/java-backend; .\mvnw.cmd package                       # Windows PowerShell
 ```
 
+### 7. Docker Compose 一键容器化部署（可选）
+
+```bash
+cp .env.docker.example .env    # 填好 MySQL 密码、JWT_SECRET 等
+docker compose up -d --build   # 8 个服务一键编排启动
+```
+
+启动后访问 http://localhost —— nginx 统一入口，同源代理 Java API、Socket.IO 与音乐子应用；MySQL 通过 `mysql-init.sql` 首次启动自动建库建表，全部数据落卷持久化。
+
 ---
 
 ## 📂 目录结构
@@ -278,7 +284,7 @@ my-fullstack-project/
 │   │       │   ├── Treehole/         # 树洞弹幕
 │   │       │   ├── Timeline/          # 时间轴
 │   │       │   └── ...
-│   │       ├── components/            # 组件（business / layout / ui）
+│   │       ├── components/            # 组件（app / business / layout / ui）
 │   │       ├── composables/           # 组合式函数（表单校验、Socket、倒计时等）
 │   │       ├── api/                   # Axios 封装
 │   │       ├── stores/                # Pinia 状态管理
@@ -291,7 +297,7 @@ my-fullstack-project/
 ├── backend/
 │   ├── java-backend/                  # Spring Boot 主业务服务
 │   │   └── src/main/java/com/example/demo/
-│   │       ├── controller/            # REST 控制器（14 个）
+│   │       ├── controller/            # REST 控制器（13 个）
 │   │       ├── service/               # 业务逻辑层
 │   │       ├── config/                # 配置（CORS / Redis / SocketIO / SecurityHeaders）
 │   │       ├── websocket/             # Socket.IO 处理器
@@ -299,15 +305,21 @@ my-fullstack-project/
 │   │       └── common/                 # 统一响应 / 全局异常 / 限流
 │   └── ai-service/                    # Python FastAPI AI 服务
 │       ├── services/
-│       │   ├── react_agent.py        # ReAct Agent 核心
-│       │   ├── rag.py                # RAG 检索主流程
-│       │   ├── embedding.py          # 向量化服务
-│       │   ├── reranker.py           # Reranker 重排序
+│       │   ├── agent.py              # Agent 入口（聚合工具 + 流式运行）
+│       │   ├── react_agent.py        # ReAct Agent 核心（原生 Function Calling）
+│       │   ├── rag.py                # RAG 检索主流程（粗召回 + 精排 + 缓存）
+│       │   ├── embedding.py          # 向量化服务（本地模型 + Redis 缓存）
+│       │   ├── reranker.py           # Reranker 融合重排序
 │       │   ├── article_chunk.py      # 文章分块与知识库管理
-│       │   └── evaluation.py         # Agent 工具调用效果评测
-│       ├── tools/                     # Agent 工具定义（9 个）
-│       └── routers/                   # FastAPI 路由
+│       │   ├── chat.py               # 会话与消息持久化（MongoDB）
+│       │   ├── evaluation.py         # RAG 检索质量评测（LLM-as-judge）
+│       │   └── agent_evaluation.py   # Agent 层评测（100 用例 × 7 维度）
+│       ├── tools/                     # Agent 工具定义（6 大业务域 27 个）
+│       └── routers/                   # FastAPI 路由（chat / conversations / system）
 │
+├── docker-compose.yml                 # 8 服务容器化编排
+├── mysql-init.sql                     # MySQL 容器首次启动自动初始化
+├── start.bat                          # Windows 本地一键启动脚本
 └── package.json                       # Monorepo 工作区配置
 ```
 
@@ -319,15 +331,16 @@ my-fullstack-project/
 
 | 模块 | 关键端点 | 说明 |
 | --- | --- | --- |
-| 认证 | `POST /api/auth/register` `login` `send-code` `reset-password` | 注册 / 登录 / 短信验证码 / 重置密码 |
-| 文章 | `GET /api/articles` `POST /api/articles` `GET /api/articles/{id}` | 列表 / 发布 / 详情 |
+| 认证 | `POST /api/auth/register` `login` `reset-password` `refresh-token` `logout` | 注册 / 登录 / 重置密码 / 刷新令牌 / 登出 |
+| 文章 | `GET /api/article` `GET /api/article/{id}` `POST /api/article/likes` `POST /api/article/collects` | 列表 / 详情 / 点赞收藏 |
+| 评论 | `GET /api/article/{id}/comments` `POST /api/article/{id}/comments` | 评论查询与发布 |
 | 分类标签 | `GET /api/categories` `GET /api/tags` | 分类与标签列表 |
-| 评论 | `POST /api/comments` `GET /api/comments/{articleId}` | 评论发布与查询 |
 | 树洞 | `POST /api/treehole` `GET /api/treehole` | 弹幕发送与拉取 |
-| 搜索 | `GET /api/search?q=` `GET /api/search/hot` | 关键词搜索 + 热门标题 |
-| 歌曲歌单 | `GET /api/songs` `GET /api/playlists` | 音乐子应用数据 |
-| AI 对话 | `POST /api/ai/chat/stream`（SSE） | 流式 AI 对话 |
-| 用户 | `GET /api/profile` `PUT /api/profile` | 个人资料 |
+| 搜索 | `GET /api/search?q=` `GET /api/search/hot-titles` | 关键词搜索 + 热门标题 |
+| 歌曲歌单 | `GET /api/songs` `GET /api/playlists` | 音乐子应用数据（支持 multipart 歌词上传） |
+| AI 对话 | `POST /api/chat/{id}`（SSE） | 流式 AI 对话，Java 网关转发 Python AI 服务 |
+| 对话管理 | `GET /api/chat/conversations` `GET /api/chat/{id}/history` | 会话列表 / 历史消息（游标分页） |
+| 用户 | `GET /api/profile` | 个人资料 / 收藏文章 |
 | 时间轴 | `GET /api/timeline` | 按时间线查询文章 |
 
 > 完整的接口字段定义请参考各 `Controller` 类的参数校验注解（Spring Validation）。
@@ -338,27 +351,55 @@ my-fullstack-project/
 
 | 维度 | 数据 / 设计 |
 | --- | --- |
-| RAG 检索召回 | Qdrant 向量召回 Top-20 候选 |
-| RAG 精排 | Reranker 重排后取 Top-5 注入 Prompt |
-| Reranker 加速 | 预计算 query embedding 一次 + 文档 embedding 缓存，融合相似度（Reranker 70% + 原始分数 30%） |
-| Embedding 缓存 | Redis SHA-256（前 16 位）防碰撞，TTL 24 小时 |
-| Agent 收敛 | 单轮支持并行工具调用，最多 5 轮推理 |
-| 文章分块策略 | Markdown 标题优先 → 滑动窗口（512 token / 128 重叠）回退 |
+| RAG 检索召回 | Qdrant 向量召回 Top-15 候选（相似度阈值 0.5 预过滤） |
+| RAG 精排 | Reranker 融合重排（Reranker 70% + 原始分数 30%），0.3 相关性阈值二次过滤后取 Top-5 |
+| Embedding 缓存 | Redis 缓存向量，SHA-256 文本哈希作键，TTL 24 小时 |
+| RAG 结果缓存 | 同一查询命中直接返回，TTL 1 小时 |
+| Agent 收敛 | 原生 Function Calling，单轮并行多工具调用，最多 5 轮推理 + 强制总结兜底 |
+| 文章分块策略 | Markdown 标题优先 → 滑动窗口（512 字符 / 50 重叠）回退 |
 | 缓存降级 | Redis 异常时自动回退到直接计算，核心流程不中断 |
-| 数据库事务 | MongoDB Replica Set 模式，跨集合操作使用事务（如点赞、知识库重建） |
-| 防并发 | 点赞采用 `findOneAndUpdate` 原子操作，避免竞态条件 |
-| 索引优化 | 用户互动集合建立 `{userId, 目标ID}` 复合唯一索引；查询热点字段建立索引 |
+| 防并发 | 点赞 / 收藏计数采用 MongoDB `$inc` 原子更新 + 互动状态 upsert，避免竞态条件 |
+| Token 安全 | Refresh Token 轮换 + Redis 黑名单（jti 作键），HttpOnly Cookie 下发 |
+
+---
+
+## 🧪 Agent 评测
+
+AI 服务内置两层评测模块：[evaluation.py](backend/ai-service/services/evaluation.py)（RAG 检索质量，LLM-as-judge）与 [agent_evaluation.py](backend/ai-service/services/agent_evaluation.py)（Agent 工具选择评测），执行 `python -m services.agent_evaluation` 即可复现。
+
+**评测设置**：100 条用例 × 7 个维度（单工具 / 知识库 RAG / 多工具并行 / 混淆判别 / 闲聊通用 / 参数组合 / 多轮上下文），期望工具全部被调用即判过，闲聊类用例要求零调用；评测使用独立 Agent 实例（temperature=0 保证可复现），与生产实例（temperature=0.7）隔离，并发 5 执行；回答质量由 LLM-as-judge（DeepSeek）打分。
+
+**分类别结果**：
+
+| 类别 | 用例数 | 工具选择准确率 | 平均推理轮数 |
+| --- | --- | --- | --- |
+| 单工具 | 38 | 100% | 1.37 |
+| 知识库 RAG | 15 | 100% | 2.20 |
+| 多工具并行 | 10 | 100% | 1.10 |
+| 混淆判别 | 10 | 90% | 1.60 |
+| 闲聊通用（零调用） | 17 | 88% | 0.12 |
+| 参数组合 | 6 | 100% | 1.67 |
+| 多轮上下文 | 4 | 100% | 1.75 |
+
+**总指标**：
+
+| 指标 | 结果 |
+| --- | --- |
+| 工具选择准确率 | 97.0%（97/100） |
+| 闲聊误调率 | 11.8%（2/17） |
+| 平均推理轮数 | 1.54（有工具调用的 85 例） |
+| 平均端到端耗时 | 3817 ms |
+| 平均相关性评分（LLM-as-judge） | 3.94 / 5 |
+
+**失败用例分析**：混淆判别 1 例——「二次元脑洞分类下的文章都在写什么内容？」中"分类"是强引导，模型选择了分类工具而非知识库；闲聊误调 2 例——「帮我想个博客文章标题」模型查了标签/分类想参考博客风格、「如何提高英语口语？」泛话题误触文章搜索。混淆判别整体 9/10：仅一词之差（"找一下关于遗憾的文章列表" vs "作者是怎么描述遗憾的"）模型能稳定区分"查列表"与"问内容"。
 
 ---
 
 ## 🔮 未来计划
 
-- [ ] 接入 Elasticsearch 实现文章全文搜索（当前为正则匹配）
+- [ ] 接入 Elasticsearch 实现文章全文搜索（当前为 MongoDB 正则匹配）
 - [ ] 补充单元测试与 E2E 测试覆盖
-- [ ] Docker Compose 一键容器化部署
 - [ ] GitHub Actions CI/CD 自动化流水线
-- [ ] Agent 工具调用效果评测体系完善
-- [ ] 移动端响应式适配优化
 
 ---
 
@@ -366,7 +407,7 @@ my-fullstack-project/
 
 本项目采用 [MIT License](LICENSE) 开源协议。
 
-> 本项目为个人学习 / 作品展示用途，所涉及的阿里云短信、AI 模型等第三方服务需使用者自行配置账号与密钥。
+> 本项目为个人学习 / 作品展示用途，所涉及的对话模型 API（默认 DeepSeek）等第三方服务需使用者自行配置账号与密钥。
 
 <div align="center">
 
