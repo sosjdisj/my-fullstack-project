@@ -3,6 +3,7 @@ import json
 import logging
 from typing import Optional
 
+from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from qdrant_client import QdrantClient
 from qdrant_client.models import FieldCondition, Filter, MatchValue
@@ -92,6 +93,9 @@ async def retrieve_relevant_chunks(
         chunk_index = payload.get("chunk_index", 0)
 
         if article_id:
+            # Qdrant payload 中是字符串，MongoDB _id 是 ObjectId，需转换后才能查到
+            if isinstance(article_id, str) and ObjectId.is_valid(article_id):
+                article_id = ObjectId(article_id)
             article = await db.articles.find_one({"_id": article_id})
             if article:
                 chunk = {
