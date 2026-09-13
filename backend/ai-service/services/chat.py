@@ -3,11 +3,21 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from bson import ObjectId
+from langchain_openai import ChatOpenAI
 from motor.motor_asyncio import AsyncIOMotorClient
 
 import config
 
 logger = logging.getLogger(__name__)
+
+# 标题生成提示词：要求简短、与提问同语言、不输出多余内容
+_TITLE_PROMPT = (
+    "请根据用户的提问生成一个简短的对话标题，要求：\n"
+    "- 不超过 15 个字\n"
+    "- 使用与提问相同的语言\n"
+    "- 直接输出标题本身，不要任何引号、前缀或解释\n\n"
+    "用户提问：{message}"
+)
 
 mongo_client: Optional[AsyncIOMotorClient] = None
 
@@ -62,6 +72,44 @@ async def create_conversation(user_id: int, title: str = "新对话") -> dict:
     result = await db.conversations.insert_one(doc)
     doc["id"] = str(result.inserted_id)
     return doc
+
+
+async def generate_conversation_title(conversation_id: str, message: str) -> Optional[str]:
+    """
+    调用 LLM 根据用户首条消息生成对话标题，并更新会话标题
+
+    Args:
+        conversation_id: 对话 ID
+        message: 用户首条消息内容
+
+    Returns:
+        生成的标题；生成失败时返回 None（保留默认标题）
+    """
+    try:
+        llm = ChatOpenAI(
+            model=config.LLM_CHAT_MODEL,
+            base_url=config.LLM_BASE_URL,
+            api_key=config.LLM_API_KEY,
+            temperature=0.3,
+            max_tokens=30,
+            streaming=False,
+        )
+        resp = await llm.ainvoke(_TITLE_PROMPT.format(message=message[:200]))
+        title = str(resp.content).strip().strip('"“”').strip()
+        if not title:
+            return None
+        # 兜底截断，避免模型不守规矩输出过长标题
+        title = title[:20]
+
+        db = _get_mongo_db()
+        await db.conversations.update_one(
+            {"_id": ObjectId(conversation_id)},
+            {"$set": {"title": title}},
+        )
+        return title
+    except Exception as e:
+        logger.warning(f"生成对话标题失败: {e}")
+        return None
 
 
 async def save_message(conversation_id: str, role: str, content: str) -> dict:
