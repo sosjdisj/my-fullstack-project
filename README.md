@@ -3,7 +3,7 @@
 # My Blog · 全栈博客系统
 
 > 基于 Vue 3 + Spring Boot + Python AI 的现代化全栈博客平台，集成 RAG 检索增强生成、ReAct Agent、实时通讯与微前端音乐播放器
-
+git status 
 </div>
 
 <div align="center">
@@ -194,10 +194,7 @@ cd my-fullstack-project
 ### 2. 配置环境变量
 
 ```bash
-# 根目录
-cp .env.example .env
-
-# Java 后端
+# Java 后端（application.yml 已含默认值，仅需覆盖差异项）
 cp backend/java-backend/.env.example backend/java-backend/.env
 
 # Python AI 服务
@@ -225,22 +222,23 @@ cd backend/java-backend; .\mvnw.cmd install; cd ..\..\..           # Windows Pow
 
 # Python AI 服务依赖
 cd backend/ai-service
-python -m venv venv
-venv/Scripts/pip install -r requirements.txt   # Windows
-# venv/bin/pip install -r requirements.txt      # macOS / Linux
+python -m venv .venv312
+.venv312/Scripts/pip install -r requirements.txt   # Windows
+# .venv312/bin/pip install -r requirements.txt     # macOS / Linux
 cd ../../..
 ```
 
 ### 5. 启动开发服务器
 
 ```bash
-# 一键同时启动前端 + Java 后端 + Python AI 服务（推荐）
-npm run dev
+# 一键启动（每个服务独立窗口，关闭窗口即停止该服务）
+start.bat
 
 # 或分别启动
-npm run dev:frontend   # 仅前端
-npm run dev:java       # 仅 Java 后端
-npm run dev:python     # 仅 Python AI 服务
+cd frontend/main-app && npm run dev                              # 博客主应用
+cd frontend/sub-apps/app-a && npm run dev                        # 音乐子应用
+cd backend/java-backend && .\mvnw.cmd spring-boot:run            # Java 后端
+cd backend/ai-service && .venv312\Scripts\python.exe -m uvicorn main:app --reload --port 8000   # Python AI 服务
 ```
 
 启动后访问：
@@ -310,7 +308,6 @@ my-fullstack-project/
 │       ├── tools/                     # Agent 工具定义（9 个）
 │       └── routers/                   # FastAPI 路由
 │
-├── .env.example                       # 根环境变量模板
 └── package.json                       # Monorepo 工作区配置
 ```
 

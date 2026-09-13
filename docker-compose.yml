@@ -1,0 +1,135 @@
+# 全栈项目容器化编排
+# 使用：复制 .env.docker.example 为 .env 并填好密码 → docker compose up -d --build
+name: my-fullstack-project
+
+services:
+  # ---------------- 数据层 ----------------
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 中设置 MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: myblog
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # 首次启动自动执行：建库建表 + 导入本地用户数据（仅空数据卷时生效）
+      - ./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    # 仅映射到本机回环便于调试，公网部署可删除
+    ports:
+      - "127.0.0.1:3306:3306"
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      # 镜像内无 curl，用 bash 内建的 /dev/tcp 探测端口
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333' "]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    # 仅映射到本机回环便于本地开发调试，公网部署可删除；
+    # 本机若有独立运行的 Qdrant 容器（占用 6333），需先停掉再 compose up
+    ports:
+      - "127.0.0.1:6333:6333"
+
+  # ---------------- 后端 ----------------
+  java-backend:
+    build: ./backend/java-backend
+    environment:
+      TZ: Asia/Shanghai
+      # Spring 环境变量绑定，覆盖 application*.yml 中的本地配置
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/myblog
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/myblog?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      JWT_SECRET: ${JWT_SECRET:?请在 .env 中设置 JWT_SECRET}
+      CORS_ALLOWED_ORIGINS: ${PUBLIC_URL:-http://localhost}
+      # Socket.IO 默认绑 127.0.0.1，容器内需绑定所有网卡供 nginx 代理
+      SOCKETIO_HOST: 0.0.0.0
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      UPLOAD_DIR: /app/uploads
+      # 留空返回相对路径 /uploads/xxx，经主应用 nginx 同源代理即可访问
+      UPLOAD_BASE_URL: ""
+      AI_SERVICE_URL: http://ai-service:8000
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  ai-service:
+    build: ./backend/ai-service
+    env_file:
+      - ./backend/ai-service/.env
+    environment:
+      # 覆盖 .env 中指向 localhost 的连接地址
+      MONGODB_URI: mongodb://mongo:27017/myblog
+      REDIS_URL: redis://redis:6379/0
+      JAVA_BACKEND_URL: http://java-backend:3001
+      QDRANT_URL: http://qdrant:6333
+      # embedding / reranker 模型下载缓存持久化；国内可加 HF_ENDPOINT=https://hf-mirror.com
+      HF_HOME: /cache/hf
+      HF_ENDPOINT: ${HF_ENDPOINT:-}
+    volumes:
+      - hf_cache:/cache/hf
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
+  # ---------------- 前端 ----------------
+  subapp:
+    build: ./frontend/sub-apps/app-a
+
+  main-app:
+    build: ./frontend/main-app
+    ports:
+      - "${APP_PORT:-80}:80"
+    depends_on:
+      - java-backend
+      - subapp
+
+volumes:
+  mysql_data:
+  mongo_data:
+  redis_data:
+  qdrant_data:
+  uploads_data:
+  hf_cache:
