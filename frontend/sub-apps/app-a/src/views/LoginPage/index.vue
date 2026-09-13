@@ -28,19 +28,24 @@
           </Transition>
         </div>
 
-        <button type="submit" class="submit-btn">登录</button>
+        <button type="submit" class="submit-btn" :disabled="isLoading">
+          <GlassSpinner v-if="isLoading" />
+          {{ isLoading ? '登录中...' : '登录' }}
+        </button>
       </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+  import GlassSpinner from '@/components/GlassSpinner.vue';
   import { useLoginPage } from './useLoginPage';
 
   const {
     router,
     form,
     errors,
+    isLoading,
     FIELD_NAMES,
     validateField,
     handleSubmit
@@ -172,6 +177,15 @@
       cursor: pointer;
       transition: all 0.3s ease;
       box-shadow: 0 6px 18px rgba(102, 126, 234, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+
+      &:disabled {
+        pointer-events: none;
+        opacity: 0.7;
+      }
 
       &:hover {
         background: #5a6fd6;

@@ -7,31 +7,34 @@
 </template>
 
 <style lang="less" scoped>
+    // --- 玻璃风变量（与项目暗色玻璃风一致） ---
+    @glass-bg: rgba(255, 255, 255, 0.08);
+    @glass-border: rgba(255, 255, 255, 0.12);
 
     /* 容器居中 */
     .loader-container {
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 200px;
-        /* 深色背景更能衬托流光 */
+        padding: 10px 0;
     }
 
-    /* 玻璃主体 */
+    /* 玻璃主体：胶囊造型，与 ReadingStatus/OnlineStatus 一致 */
     .glass-loader {
         position: relative;
-        width: 120px;
-        height: 90px;
+        padding: 12px 28px;
         display: flex;
         justify-content: center;
         align-items: center;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 20%;
+        background: @glass-bg;
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid @glass-border;
+        border-radius: 100px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         overflow: hidden;
-        color: #38bdf8;
-        font-family: sans-serif;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 14px;
         font-weight: bold;
         letter-spacing: 1px;
     }
@@ -50,14 +53,14 @@
         animation: rotate 2s linear infinite;
     }
 
-    /* 内部遮罩，露出流光边框线 */
+    /* 内部毛玻璃遮罩，露出流光边框线 */
     .glass-loader::after {
         content: '';
         position: absolute;
-        inset: 4px;
+        inset: 2px;
         /* 控制边框粗细 */
-        background: #1e293b;
-        border-radius: 18%;
+        background: rgba(28, 30, 38, 0.6);
+        border-radius: 100px;
         z-index: 0;
     }
 
@@ -65,7 +68,7 @@
     .glass-loader span {
         position: relative;
         z-index: 1;
-        text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
     }
 
     /* 旋转动画 */

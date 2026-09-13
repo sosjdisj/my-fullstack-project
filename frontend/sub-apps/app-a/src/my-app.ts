@@ -78,6 +78,13 @@ const mount = (props?: any) => {
     // 注册背景图懒加载指令
     app.directive('lazy', lazy)
     app.mount(el)
+
+    // 首屏加载完成：淡出并移除 index.html 中的玻璃风加载占位
+    const initialLoader = document.getElementById('initial-loader')
+    if (initialLoader) {
+        initialLoader.classList.add('is-hidden')
+        initialLoader.addEventListener('transitionend', () => initialLoader.remove(), { once: true })
+    }
 }
 
 // 封装 unmount 逻辑

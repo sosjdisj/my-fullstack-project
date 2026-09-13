@@ -29,3 +29,10 @@ microApp.start({
   iframe: true
 })
 app.mount('#app')
+
+// 首屏加载完成：淡出并移除 index.html 中的玻璃风加载占位
+const initialLoader = document.getElementById('initial-loader')
+if (initialLoader) {
+  initialLoader.classList.add('is-hidden')
+  initialLoader.addEventListener('transitionend', () => initialLoader.remove(), { once: true })
+}

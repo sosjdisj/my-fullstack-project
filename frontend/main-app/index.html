@@ -70,26 +70,55 @@
   }
   </script>
 
-  <!-- 首屏渲染优化：占位骨架，避免 SPA 白屏 -->
+  <!-- 首屏渲染优化：玻璃风加载占位，避免 SPA 白屏；Vue 挂载完成后由 main.ts 淡出移除 -->
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; }
+    html, body { margin: 0; padding: 0; height: 100%; background: #1c1e26; }
     #app { min-height: 100vh; }
     #initial-loader {
       position: fixed; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      background: #ffffff;
-      color: #888;
+      background: #1c1e26; /* 与应用暗色基调一致，避免白屏闪烁 */
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+    #initial-loader.is-hidden { opacity: 0; pointer-events: none; }
+    #initial-loader .loader-pill {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 28px;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 100px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      color: rgba(255, 255, 255, 0.9);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 14px;
-      z-index: 9999;
+      font-weight: 600;
+      letter-spacing: 1px;
     }
+    #initial-loader .loader-ring {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: conic-gradient(transparent 0%, #38bdf8 30%, #818cf8 60%, #c084fc 90%, transparent 100%);
+      mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+      animation: loader-spin 0.8s linear infinite;
+    }
+    @keyframes loader-spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 
 <body>
-  <div id="app">
-    <div id="initial-loader">加载中...</div>
+  <!-- 加载占位放在 #app 外，避免被 Vue 挂载覆盖，便于淡出移除 -->
+  <div id="initial-loader">
+    <div class="loader-pill">
+      <span class="loader-ring"></span>
+      加载中...
+    </div>
   </div>
+  <div id="app"></div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 

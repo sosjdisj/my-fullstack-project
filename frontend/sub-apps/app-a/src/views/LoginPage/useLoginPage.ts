@@ -67,6 +67,8 @@ export function useLoginPage() {
     return !errors[field]
   }
 
+  const isLoading = ref(false)
+
   /** 提交表单：整体校验通过后登录并跳转 */
   const handleSubmit = async () => {
     const isUsernameValid = validateField(FIELD_NAMES.username)
@@ -74,25 +76,30 @@ export function useLoginPage() {
 
     if (!isUsernameValid || !isPasswordValid) return ElMessage.error('请检查输入信息')
 
-    const hashedPassword = await sha256(form.password)
-    const loginPayload = {
-      username: form.username,
-      password: hashedPassword
-    }
-    const userData = await post('/auth/login', loginPayload)
+    isLoading.value = true
+    try {
+      const hashedPassword = await sha256(form.password)
+      const loginPayload = {
+        username: form.username,
+        password: hashedPassword
+      }
+      const userData = await post('/auth/login', loginPayload)
 
-    if (userData.success) {
+      if (userData.success) {
 
-      const { token, username, avatar } = userData.data.data
+        const { token, username, avatar } = userData.data.data
 
-      saveUserInfo(store, { username, avatar, token })
-      ElMessage.success(userData.message)
+        saveUserInfo(store, { username, avatar, token })
+        ElMessage.success(userData.message)
 
-      // 登录成功后返回之前要访问的页面；无来源时回首页
-      // 使用 replace 替换历史记录，避免用户通过浏览器后退再次回到登录页
-      const redirect = router.currentRoute.value.query.redirect as string | undefined
-      router.replace(redirect || '/')
+        // 登录成功后返回之前要访问的页面；无来源时回首页
+        // 使用 replace 替换历史记录，避免用户通过浏览器后退再次回到登录页
+        const redirect = router.currentRoute.value.query.redirect as string | undefined
+        router.replace(redirect || '/')
 
+      }
+    } finally {
+      isLoading.value = false
     }
   }
 
@@ -100,6 +107,7 @@ export function useLoginPage() {
     router,
     form,
     errors,
+    isLoading,
     FIELD_NAMES,
     validateField,
     handleSubmit

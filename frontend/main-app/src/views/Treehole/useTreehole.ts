@@ -1,5 +1,4 @@
 // Vue API 由 unplugin-auto-import 全局注入
-import type { VNodeRef } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { get, post } from '@/api/request'
 import { validateContent } from '@/utils/validation'
@@ -31,11 +30,20 @@ export function useTreehole() {
 
   const BATCH_SIZE = 30
   const LOW_STOCK_THRESHOLD = 10  // 低于10条时补充
+  const HOVER_GRACE = 100  // 鼠标移动宽限期(ms)，区分"主动悬停"与"弹幕滑过静止光标"
   let pendingDanmakus: DanmakusList[] = []  // 待发射队列
+
+  // 记录最近一次鼠标移动时间：光标静止时飞过的弹幕不应被暂停
+  let lastMouseMoveAt = 0
+  const markMouseMove = () => { lastMouseMoveAt = Date.now() }
+  window.addEventListener('mousemove', markMouseMove, { passive: true })
+  onUnmounted(() => window.removeEventListener('mousemove', markMouseMove))
 
   const handleFocus = () => {
     isShow.value = true
   }
+
+  const isSubmitting = ref(false)
 
   const handleTreehole = async () => {
 
@@ -44,12 +52,16 @@ export function useTreehole() {
     const error = validateContent(content.value, { max: 100, name: '弹幕' })
     if (error) return ElMessage.error(error)
 
-    const result = await post('/treehole', { content: content.value.trim() })
+    isSubmitting.value = true
+    try {
+      const result = await post('/treehole', { content: content.value.trim() })
 
-    if (!result.success) return
+      if (!result.success) return
 
-    ElMessage.success('你的弹幕已送达～')
-
+      ElMessage.success('你的弹幕已送达～')
+    } finally {
+      isSubmitting.value = false
+    }
   }
 
   const fetchNewDanmakus = async () => {
@@ -104,8 +116,29 @@ export function useTreehole() {
     danmakuRef.value = el
   }
 
+  /** 悬停暂停：只冻结用户主动放上去的那一条；弹幕自己滑入静止光标时不暂停 */
+  const handleDanmuOver = (e: MouseEvent) => {
+    if (Date.now() - lastMouseMoveAt > HOVER_GRACE) return
+    const dm = (e.target as HTMLElement).closest?.('.dm') as HTMLElement | null
+    dm?.classList.add('dm-pause')
+  }
+
+  /** 移开恢复：只解除当前这一条，其他弹幕不受影响 */
+  const handleDanmuOut = (e: MouseEvent) => {
+    const dm = (e.target as HTMLElement).closest?.('.dm') as HTMLElement | null
+    if (!dm) return
+    // 光标只是在该弹幕内部子元素间移动，不解除
+    const related = e.relatedTarget as HTMLElement | null
+    if (related && dm.contains(related)) return
+    // 浮动动画导致的边界抖动（光标实际仍在弹幕范围内），不解除
+    const r = dm.getBoundingClientRect()
+    if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) return
+    dm.classList.remove('dm-pause')
+  }
+
   return {
     isShow,
+    isSubmitting,
     allDanmus,
     content,
     setDanmakuRef,
@@ -113,6 +146,8 @@ export function useTreehole() {
     handleFocus,
     handleTreehole,
     initTreehole,
-    clearIntervalTimer
+    clearIntervalTimer,
+    handleDanmuOver,
+    handleDanmuOut
   }
 }

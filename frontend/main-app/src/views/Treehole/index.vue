@@ -1,8 +1,8 @@
 <template>
     <div class="Treehole">
-        <div class="danmu" ref="danmu">
+        <div class="danmu" ref="danmu" @mouseover="handleDanmuOver" @mouseout="handleDanmuOut">
             <vue-danmaku :ref="setDanmakuRef" :danmus="allDanmus" :channels="4" :speeds="100" :loop="false"
-                :randomChannel="true" :isSuspend="true" style="height: 100%; width: 100%;">
+                :randomChannel="true" :performanceMode="false" style="height: 100%; width: 100%;">
 
                 <template #danmu="{ danmu }">
                     <div class="usertext">
@@ -26,7 +26,10 @@
                 <form @submit.prevent="handleTreehole" class="input-group">
                     <input type="text" class="danmaku-input" placeholder="在这里留下自己的足迹吧..." @focus="handleFocus"
                         v-model="content">
-                    <button v-if="isShow" class="danmaku-button">提交</button>
+                    <button class="danmaku-button" :class="{ show: isShow }" :disabled="isSubmitting">
+                        <GlassSpinner v-if="isSubmitting" />
+                        <span v-else>提交</span>
+                    </button>
                 </form>
             </div>
         </div>
@@ -36,10 +39,12 @@
 <script setup lang="ts">
     // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
     import vueDanmaku from 'vue-danmaku'
+    import GlassSpinner from '@/components/ui/GlassSpinner.vue'
     import { useTreehole } from './useTreehole'
 
-    const { isShow, allDanmus, content, setDanmakuRef,
-        handleFocus, handleTreehole, initTreehole, clearIntervalTimer
+    const { isShow, isSubmitting, allDanmus, content, setDanmakuRef,
+        handleFocus, handleTreehole, initTreehole, clearIntervalTimer,
+        handleDanmuOver, handleDanmuOut
     } = useTreehole()
 
     onMounted(() => {
@@ -94,6 +99,12 @@
             height: 320px;
             z-index: 2;
 
+            // 悬停冻结单条弹幕；置顶让后方同轨道弹幕从其下方穿过
+            :deep(.dm.dm-pause) {
+                animation-play-state: paused !important;
+                z-index: 10 !important;
+            }
+
             .usertext {
                 display: flex;
                 flex-direction: column;
@@ -120,15 +131,16 @@
                         height: 45px;
                         box-sizing: content-box;
                         border-radius: 50%;
+                        overflow: hidden;
                         background: rgba(255, 255, 255, 0.3);
                         border: 1px solid rgba(255, 255, 255, 0.4);
                         backdrop-filter: blur(5px);
                         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 
                         img {
+                            display: block;
                             width: 100%;
                             height: 100%;
-                            overflow: hidden;
                             object-fit: cover;
                         }
                     }
@@ -243,15 +255,37 @@
                     }
 
                     .danmaku-button {
+                        // 常驻渲染：聚焦时从 0 宽度展开，让外层容器跟着平滑变宽
+                        max-width: 0;
                         height: 40px;
-                        padding: 0 25px;
+                        padding: 0;
                         border-radius: 20px;
                         border: none;
                         background: #409EFF;
                         color: white;
                         font-weight: 600;
+                        opacity: 0;
+                        overflow: hidden;
+                        white-space: nowrap;
                         cursor: pointer;
-                        transition: all 0.3s ease;
+                        transition: max-width 0.3s ease, padding 0.3s ease, opacity 0.3s ease,
+                            background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+
+                        &.show {
+                            max-width: 120px;
+                            padding: 0 25px;
+                            opacity: 1;
+                        }
+
+                        // 提交中展示加载动画
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+
+                        &:disabled {
+                            pointer-events: none;
+                            opacity: 0.7;
+                        }
 
                         &:hover {
                             background: #66b1ff;

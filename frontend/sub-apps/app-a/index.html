@@ -5,9 +5,78 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>音乐微应用</title>
+
+    <!-- 首屏渲染优化：浅色玻璃风加载占位，避免白屏；Vue 挂载完成后由 my-app.ts 淡出移除 -->
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: #eef2f7;
+        }
+
+        #initial-loader {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eef2f7;
+            /* 与微应用浅色基调一致 */
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        #initial-loader.is-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #initial-loader .loader-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 100px;
+            box-shadow: 0 8px 24px rgba(31, 38, 135, 0.12);
+            color: #34495e;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        #initial-loader .loader-ring {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: conic-gradient(transparent 0%, #667eea 30%, #9b6dff 60%, #57c1ff 90%, transparent 100%);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+            animation: loader-spin 0.8s linear infinite;
+        }
+
+        @keyframes loader-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 </head>
 
 <body>
+    <!-- 加载占位放在 #app 外，避免被 Vue 挂载覆盖，便于淡出移除 -->
+    <div id="initial-loader">
+        <div class="loader-pill">
+            <span class="loader-ring"></span>
+            加载中...
+        </div>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/my-app.ts"></script>
 </body>
