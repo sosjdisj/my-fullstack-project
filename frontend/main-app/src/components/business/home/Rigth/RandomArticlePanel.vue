@@ -24,12 +24,12 @@
 
 <script lang="ts" setup>
     // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
-    import type { ArticleNeighbor } from '@/types/index'
+    import type { RandomArticle } from '@/types/index'
     import { get } from '@/api/request'
     import { formatDate } from '@/utils/helpers'
     import { useNavigation } from '@/utils/navigation'
 
-    const RandomArticle = ref<ArticleNeighbor[]>([])
+    const RandomArticle = ref<RandomArticle[]>([])
     const loading = ref()
     const { goArticleDetail } = useNavigation()
 
@@ -44,7 +44,7 @@
             loading.value = false
         }, 300) // 300ms延迟，让用户看到加载效果
     }
-    const handnavigateTo = (item: ArticleNeighbor) => {
+    const handnavigateTo = (item: RandomArticle) => {
         goArticleDetail(item.id)
     }
     const getRandomArticle = async () => {

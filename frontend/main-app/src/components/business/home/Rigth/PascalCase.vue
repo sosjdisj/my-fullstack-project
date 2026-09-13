@@ -6,7 +6,7 @@
 
             <div class="avatar-wrapper">
                 <div class="top-avatar">
-                    <img src="" alt="">
+                    <img :src="store.avatar ?? ''" alt="">
                 </div>
             </div>
 
@@ -15,22 +15,6 @@
         </div>
 
         <!-- 人性的背后是白云苍狗，愿你我都能做生活的高手 -->
-
-        <div class="data-section">
-            <div class="data-item">
-                <span class="num">0</span>
-                <span class="label">文章</span>
-            </div>
-            <div class="divider"></div>
-            <div class="data-item">
-                <span class="num">0</span> <span class="label">分类</span>
-            </div>
-            <div class="divider"></div>
-            <div class="data-item">
-                <span class="num">0</span>
-                <span class="label">访问</span>
-            </div>
-        </div>
 
         <div v-if="isNotFullProfile" class="bottom-action">
             <button class="follow-btn" @click="router.push('/fullProfile')">个人主页</button>
@@ -65,7 +49,6 @@
         backdrop-filter: blur(15px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        // 初始透明度改为 1 配合全局动画，或者保持你的 0
         opacity: 1;
 
         &:hover {
@@ -149,38 +132,6 @@
                 padding: 0 20px;
                 text-align: center;
                 line-height: 1.5;
-            }
-        }
-
-        .data-section {
-            display: flex;
-            align-items: center;
-            padding: 20px 0;
-            background: rgba(255, 255, 255, 0.03);
-
-            .data-item {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 5px;
-
-                .num {
-                    color: #409EFF;
-                    font-size: 18px;
-                    font-weight: 600;
-                }
-
-                .label {
-                    color: rgba(255, 255, 255, 0.5);
-                    font-size: 12px;
-                }
-            }
-
-            .divider {
-                width: 1px;
-                height: 30px;
-                background: rgba(255, 255, 255, 0.1);
             }
         }
 

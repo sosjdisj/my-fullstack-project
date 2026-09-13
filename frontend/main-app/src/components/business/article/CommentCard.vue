@@ -28,7 +28,7 @@
     const props = defineProps<{
         data: ArticleComment
     }>()
-
+    console.log(props.data)
     const { username, avatar, content, createTime } = props.data
 </script>
 
