@@ -101,4 +101,18 @@ public class ChatService {
             throw new BusinessException(403, "无权访问该会话");
         }
     }
+
+    /**
+     * 删除会话及其全部消息，同时校验归属防止越权删除他人对话
+     */
+    public void deleteConversation(String conversationId, Integer userId) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new BusinessException(404, "会话不存在"));
+        if (!conversation.getUserId().equals(userId)) {
+            throw new BusinessException(403, "无权删除该会话");
+        }
+
+        aiMessageRepository.deleteByConversationId(new ObjectId(conversationId));
+        conversationRepository.delete(conversation);
+    }
 }

@@ -14,4 +14,6 @@ public interface AiMessageRepository extends MongoRepository<AiMessage, String> 
     List<AiMessage> findByConversationIdAndCreatedAtBeforeOrderByCreatedAtDesc(ObjectId conversationId, java.time.LocalDateTime cursor, Pageable pageable);
 
     List<AiMessage> findByConversationIdOrderByCreatedAtAsc(ObjectId conversationId, Pageable pageable);
+
+    void deleteByConversationId(ObjectId conversationId);
 }

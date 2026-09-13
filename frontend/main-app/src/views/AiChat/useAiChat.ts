@@ -1,5 +1,5 @@
 // Vue API 由 unplugin-auto-import 全局注入
-import { get, post } from '@/api/request';
+import { get, post, Delete } from '@/api/request';
 import type { AiChat, Conversations } from '@/types/index';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { setLoadMoreContainerRef } from '@/utils/helpers';
@@ -37,9 +37,6 @@ export function useAiChat() {
     let cleanupLoadMoreObserver: (() => void) | null = null;
 
     const shouldShowLoadMoreObserver = computed(() => messages.value.length > 0);
-
-    // 固定的推荐标签
-    const tags = ref(['写一段 JavaScript 排序算法', '如何优化 Vue 项目性能？', '帮我写一封求职邮件']);
 
     // 自动滚动到底部
     const scrollToBottom = async () => {
@@ -159,15 +156,42 @@ export function useAiChat() {
             const res = await post('/chat/new', {});
             const conv = res.data.data;
 
-            conversationId.value = conv._id;
+            conversationId.value = conv.id;
             conversations.value.push(conv);
 
-            messagesMap.value.set(conv._id, []);
-            finishedMap.value.set(conv._id, false);
+            messagesMap.value.set(conv.id, []);
+            finishedMap.value.set(conv.id, false);
             isChatting.value = true;
             inputVal.value = '';
         } catch (error) {
             ElMessage.error('开启新会话失败');
+        }
+    };
+
+    // 删除会话：请求后端删除后，清理本地的列表与缓存状态
+    const handleDeleteConversation = async (id: string) => {
+        try {
+            const res = await Delete(`/chat/${id}`);
+            if (!res.success) throw new Error(res.message);
+
+            // 若该会话的流还在进行中，先中止
+            ctrlMap.get(id)?.abort();
+            ctrlMap.delete(id);
+
+            conversations.value = conversations.value.filter(c => c.id !== id);
+            messagesMap.value.delete(id);
+            finishedMap.value.delete(id);
+            loadingMap.value.delete(id);
+
+            // 删除的是当前打开的会话，回到欢迎页
+            if (conversationId.value === id) {
+                conversationId.value = '';
+                isChatting.value = false;
+            }
+            ElMessage.success('删除成功');
+        } catch (error) {
+            console.error('删除会话失败', error);
+            ElMessage.error('删除会话失败');
         }
     };
 
@@ -202,7 +226,9 @@ export function useAiChat() {
     const handleSend = async () => {
         if (isLoading.value) return
 
-        const error = validateContent(inputVal.value, { max: 2000, name: '问题' })
+        // 快照：必须在 await 之前取值，handleNewChat 会清空 inputVal
+        const userContent = inputVal.value.trim();
+        const error = validateContent(userContent, { max: 2000, name: '问题' })
         if (error) return ElMessage.error(error)
 
         // 如果当前没有会话 ID，先创建一个
@@ -210,9 +236,7 @@ export function useAiChat() {
             await handleNewChat();
         }
 
-        // 快照：避免切换会话后被闭包内的 conversationId.value 影响写入目标
         const convId = conversationId.value;
-        const userContent = inputVal.value.trim();
 
         if (!messagesMap.value.has(convId)) {
             messagesMap.value.set(convId, []);
@@ -331,9 +355,9 @@ export function useAiChat() {
     };
 
     return {
-        isCollapsed, inputVal, isLoading, messages, handleSend, tags,
+        isCollapsed, inputVal, isLoading, messages, handleSend,
         shouldShowLoadMoreObserver, isChatting, conversations, conversationId,
         handleNewChat, setLoadMoreContainerRefWrapper, handleTag, selectConversation,
-        fetchConversations, clear, chatContainer,
+        fetchConversations, clear, chatContainer, handleDeleteConversation,
     };
 }
