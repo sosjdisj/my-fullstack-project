@@ -297,7 +297,7 @@ public class ArticleService {
             User user = userMapper.selectById(comment.getUserId());
             if (user != null) {
                 item.put("username", user.getUsername());
-                item.put("cover", user.getCover());
+                item.put("avatar", user.getCover());
             }
 
             commentList.add(item);

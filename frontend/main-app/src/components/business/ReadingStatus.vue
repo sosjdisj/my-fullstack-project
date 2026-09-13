@@ -1,25 +1,29 @@
 <template>
-    <div class="reading-status-tag">
-        <div class="eye-icon">
-            <div class="eye-ball"></div>
-        </div>
+    <Transition name="tag-slide">
+        <div class="reading-status-tag" v-show="!userStore.header">
+            <div class="eye-icon">
+                <div class="eye-ball"></div>
+            </div>
 
-        <div class="content">
-            <span class="label">正在阅读</span>
-            <span class="value">{{ readerCount }}</span>
-        </div>
+            <div class="content">
+                <span class="label">正在阅读</span>
+                <span class="value">{{ readerCount }}</span>
+            </div>
 
-        <div class="shimmer"></div>
-    </div>
+            <div class="shimmer"></div>
+        </div>
+    </Transition>
 </template>
 
 <script lang="ts" setup>
     import { useArticleSocket } from '@/composables/useArticleSocket'
+    import { useUserStore } from '@/stores/user'
 
     const props = defineProps<{
         id: string
     }>()
 
+    const userStore = useUserStore()
     const { readerCount } = useArticleSocket(props.id)
 </script>
 
@@ -115,6 +119,18 @@
                     transparent);
             animation: scan 5s infinite 1s ease-in-out;
         }
+    }
+
+    // --- 收起/展开过渡 ---
+    .tag-slide-enter-active,
+    .tag-slide-leave-active {
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .tag-slide-enter-from,
+    .tag-slide-leave-to {
+        opacity: 0;
+        transform: translateX(-30px);
     }
 
     // --- 动画 ---

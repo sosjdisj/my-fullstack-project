@@ -6,9 +6,7 @@
                 <ArticleHeader v-if="isDataReady" :articleData="articleData" />
 
                 <div class="bottom">
-                    <p>
-                        {{ articleData.content }}
-                    </p>
+                    <MarkdownBubble :content="articleData.content" />
                 </div>
             </div>
             <div class="xuxian"></div>
@@ -18,7 +16,8 @@
             <LikeButton @update-like="handleUpdateDataLike" @update-collects="handleUpdateDataFavorites"
                 v-if="isDataReady" :articleData="articleData" :prev :next />
 
-            <Remark :comments="articleData.comments" :id="articleData.id" ref="remarkComponentRef" />
+            <Remark :comments="articleData.comments" :id="articleData.id" ref="remarkComponentRef"
+                @comment-posted="handleCommentPosted" />
 
             <CommentCard v-for="item in comments" :data="item" />
 
@@ -42,6 +41,7 @@
     import CommentCard from '@/components/business/article/CommentCard.vue'
     import ReadingStatus from '@/components/business/ReadingStatus.vue';
     import InfiniteScrollContainer from '@/components/business/InfiniteScrollContainer.vue';
+    import MarkdownBubble from '@/components/ui/MarkdownBubble .vue';
     import { useArticleDetail } from './useArticleDetail';
 
     const remarkComponentRef = ref<InstanceType<typeof Remark> | null>(null);
@@ -49,7 +49,7 @@
     const { queryData, articleData, prev, next, isDataReady, isFinished, comments,
         handleUpdateDataLike,
         handleUpdateDataFavorites, fetchArticleData, loadMore,
-        cleanupuseArticleListByCategory, handleScrollToComment } = useArticleDetail(remarkComponentRef)
+        cleanupuseArticleListByCategory, handleScrollToComment, handleCommentPosted } = useArticleDetail(remarkComponentRef)
 
     onMounted(async () => {
         await fetchArticleData()
@@ -80,14 +80,24 @@
             border-radius: 24px; // 稍微大一点的圆角更有高级感
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             overflow: hidden;
+            padding: 40px;
+            font-size: 16px;
+            line-height: 2;
+            letter-spacing: 0.02em;
+            color: @text-main;
 
-            p {
-                line-height: 2;
-                font-size: 16px;
-                color: @text-main;
-                padding: 40px;
-                white-space: pre-wrap;
-                letter-spacing: 0.02em;
+            // Markdown 经 v-html 渲染，需 :deep 穿透
+            :deep(h1),
+            :deep(h2),
+            :deep(h3),
+            :deep(h4) {
+                color: #fff;
+                line-height: 1.4;
+                margin: 24px 0 12px;
+            }
+
+            :deep(p) {
+                margin: 0 0 12px;
             }
         }
     }

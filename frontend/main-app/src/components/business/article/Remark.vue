@@ -21,7 +21,10 @@
                     <div class="btn-preview" @click="handYulan" :class="{ 'active': isYulan }">
                         {{ isYulan ? '关闭预览' : '预览' }}
                     </div>
-                    <button class="btn-submit" type="submit">发布评论</button>
+                    <button class="btn-submit" type="submit" :disabled="isSubmitting">
+                        <GlassSpinner v-if="isSubmitting" />
+                        {{ isSubmitting ? '发布中...' : '发布评论' }}
+                    </button>
                 </div>
             </div>
         </form>
@@ -40,6 +43,7 @@
     import { post } from '@/api/request';
     import { useUserStore } from '@/stores/user';
     import { validateContent } from '@/utils/validation';
+    import GlassSpinner from '@/components/ui/GlassSpinner.vue';
 
     const props = defineProps<{
         comments: number
@@ -49,6 +53,10 @@
     const userStore = useUserStore()
     const isYulan = ref(false)
     const content = ref('')
+
+    const emit = defineEmits<{
+        commentPosted: [payload: { content: string, count: number }]
+    }>()
 
     const remark = ref<HTMLDivElement | null>(null)
 
@@ -62,18 +70,27 @@
 
         isYulan.value = false
     }
+    const isSubmitting = ref(false)
+
     const handPinglun = async () => {
         if (!userStore.token) return ElMessage.error('请先登录后再发表评论')
 
         const error = validateContent(content.value, { max: 500, name: '评论' })
         if (error) return ElMessage.error(error)
 
-        const result = await post(`/article/${props.id}/comments`, { content: content.value.trim() })
+        isSubmitting.value = true
+        try {
+            const result = await post(`/article/${props.id}/comments`, { content: content.value.trim() })
 
-        if (result.success) {
-            ElMessage.success(result.message)
-            content.value = ''
-            isYulan.value = false
+            if (result.success) {
+                ElMessage.success(result.message)
+                // 通知父组件插入新评论并更新评论数（后端按时间倒序，插到列表头部即为最新）
+                emit('commentPosted', { content: content.value.trim(), count: result.data?.data?.count })
+                content.value = ''
+                isYulan.value = false
+            }
+        } finally {
+            isSubmitting.value = false
         }
     }
 </script>
@@ -208,6 +225,15 @@
                 cursor: pointer;
                 box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
                 transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+
+                &:disabled {
+                    pointer-events: none;
+                    opacity: 0.7;
+                }
 
                 &:hover {
                     transform: translateY(-2px);

@@ -1,19 +1,23 @@
 <template>
-    <div class="mini-status-tag">
-        <div class="status-dot"></div>
-        <div class="content">
-            <span class="label">在线</span>
-            <span class="value">{{ store.totalOnline }}</span>
+    <Transition name="tag-slide">
+        <div class="mini-status-tag" v-show="!userStore.header">
+            <div class="status-dot"></div>
+            <div class="content">
+                <span class="label">在线</span>
+                <span class="value">{{ store.totalOnline }}</span>
+            </div>
+            <div class="shimmer"></div>
         </div>
-        <div class="shimmer"></div>
-    </div>
+    </Transition>
 </template>
 
 <script lang="ts" setup>
     import { useAppStore } from '@/stores/app'
+    import { useUserStore } from '@/stores/user'
     // Vue/Vue Router/Pinia API 由 unplugin-auto-import 全局注入
 
     const store = useAppStore()
+    const userStore = useUserStore()
 
     onMounted(() => {
         store.initSocketListeners()
@@ -112,6 +116,18 @@
                     transparent);
             animation: scan 4s infinite ease-in-out;
         }
+    }
+
+    // --- 收起/展开过渡 ---
+    .tag-slide-enter-active,
+    .tag-slide-leave-active {
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .tag-slide-enter-from,
+    .tag-slide-leave-to {
+        opacity: 0;
+        transform: translateX(-30px);
     }
 
     // --- 动画 ---

@@ -4,10 +4,12 @@ import { setLoadMoreContainerRef, usePaginationCache } from '@/utils/helpers'
 import { CACHE_KEYS } from '@/constants/cacheKeys'
 import { usePageControl } from '@/composables/usePageControl'
 import { scrollToComment } from '@/utils/helpers'
+import { useUserStore } from '@/stores/user'
 import type Remark from '@/components/business/article/Remark.vue'
 
 export function useArticleDetail(remarkComponentRef: Ref<InstanceType<typeof Remark> | null>) {
     const route = useRoute()
+    const userStore = useUserStore()
     const comments = ref<ArticleComment[]>([])
 
     const queryData = computed(() => {
@@ -128,6 +130,18 @@ export function useArticleDetail(remarkComponentRef: Ref<InstanceType<typeof Rem
         scrollToComment(domElement);
     }
 
+    /** 评论发表成功后，本地插入新评论并更新评论数，无需重新请求 */
+    const handleCommentPosted = ({ content, count }: { content: string, count: number }) => {
+        articleData.value.comments = count
+        comments.value.unshift({
+            _id: Date.now(),
+            username: userStore.username ?? '',
+            avatar: userStore.avatar ?? '',
+            content,
+            createTime: new Date().toLocaleDateString('sv-SE')
+        } as ArticleComment)
+    }
+
     const loadMore = async () => {
         await fetchComments();
     }
@@ -147,6 +161,7 @@ export function useArticleDetail(remarkComponentRef: Ref<InstanceType<typeof Rem
         setLoadMoreContainerRefWrapper,
         cleanupuseArticleListByCategory,
         handleScrollToComment,
+        handleCommentPosted,
         loadMore
     }
 }
