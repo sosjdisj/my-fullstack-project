@@ -45,7 +45,6 @@
     singer,
     coverUrl,
     lrcLines,
-    lyricsBody,
     currentLine,
     scrollOffset,
     setLineRef,

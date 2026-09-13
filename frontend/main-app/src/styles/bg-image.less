@@ -4,7 +4,10 @@
     top: 0;
     left: 0;
     position: absolute;
-    z-index: -1;
+    // 不能用 -1：body 有不透明深色背景，普通流背景绘制在负 z-index 元素之后，
+    // 会把整张背景图盖住（页面只剩灰黑底色）。0 = 与玻璃内容卡（backdrop-filter
+    // 创建的堆叠上下文）同阶段按 DOM 顺序绘制，内容卡在 DOM 中靠后自然盖在图上
+    z-index: 0;
     overflow: hidden;
 
     img {

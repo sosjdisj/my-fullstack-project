@@ -3,7 +3,7 @@
     <div class="category">
 
         <div class="bg-image">
-            <img src="/src/assets/18390764516330880.jpg" alt="">
+            <img src="/images/18390764516330880.jpg" alt="">
         </div>
 
         <div class="category-container">
@@ -84,7 +84,10 @@
             position: fixed;
             left: 0;
             top: 0;
-            z-index: -1;
+            // 不能用 -1：body 自身有不透明深色背景（普通流内元素背景绘制在
+            // 负 z-index 元素之后），会把整张背景图盖住，页面只剩灰黑底色。
+            // 0 = 按"定位元素"阶段绘制，位于 body 背景之上、内容容器（z-index:1）之下
+            z-index: 0;
 
             img {
                 width: 100%;

@@ -13,7 +13,7 @@ export async function get(path: string, data?: any) {
     }
 }
 
-export async function post(path: string, data: any) {
+export async function post(path: string, data?: any) {
     const result = await service.post(path, data)
 
     const isSuccess = result.status === 200 && (result.data.code === 200 || result.data.status === 200);
