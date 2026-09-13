@@ -45,7 +45,7 @@ public class TreeholeService {
             item.put("userId", msg.getUserId());
             User user = userMap.get(msg.getUserId());
             if (user != null) {
-                item.put("cover", user.getCover());
+                item.put("avatar", user.getCover());
             }
             result.add(item);
         }
