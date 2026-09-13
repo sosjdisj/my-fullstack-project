@@ -1,9 +1,9 @@
 // Vue API 由 unplugin-auto-import 全局注入
 import { get, getModifiedFields, patch } from '@/api/request';
 import type { Mark } from '@/types/index'
-import { buildArticleFormData, deepEqual, isFormDataComplete } from '@/utils/helpers';
+import { buildFormData, deepEqual, isFormDataComplete } from '@/utils/helpers';
 import { useUserStore } from '@/stores/user'
-import { validateUsername, validatePhone, validateContent } from '@/utils/validation'
+import { validateUsername, validateEmail, validateContent } from '@/utils/validation'
 
 
 export function useSetting() {
@@ -12,7 +12,7 @@ export function useSetting() {
     const userData = ref<Mark>({
         username: '',
         signature: '',
-        phone: '',
+        email: '',
         cover: null
     })
     const checkForChanges = ref({ ...userData.value })
@@ -31,8 +31,8 @@ export function useSetting() {
         const usernameErr = validateUsername(userData.value.username)
         if (usernameErr) return ElMessage.error(usernameErr)
 
-        const phoneErr = validatePhone(userData.value.phone)
-        if (phoneErr) return ElMessage.error(phoneErr)
+        const emailErr = validateEmail(userData.value.email)
+        if (emailErr) return ElMessage.error(emailErr)
 
         const signatureErr = validateContent(userData.value.signature, { max: 100, name: '个人简介', allowEmpty: true })
         if (signatureErr) return ElMessage.error(signatureErr)
@@ -48,7 +48,7 @@ export function useSetting() {
 
         const finalFormData = new FormData()
 
-        buildArticleFormData(finalFormData, modifiedFields, coverFile.value);
+        buildFormData(finalFormData, modifiedFields, coverFile.value);
 
         isSubmitting.value = true
 

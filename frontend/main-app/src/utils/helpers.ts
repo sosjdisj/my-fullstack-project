@@ -209,9 +209,12 @@ export function deepEqual(objA: Record<string, any>, objB: Record<string, any>) 
     return true;
 }
 
-export function buildArticleFormData(formData: FormData, record: Record<string, any>, coverFile: File | null) {
+export function buildFormData(formData: FormData, record: Record<string, any>, coverFile: File | null) {
     if (coverFile) {
         formData.append('avatar', coverFile)
     }
-    formData.append('data', JSON.stringify(record))
+    // 后端 @RequestParam 按独立字段接收，逐个追加
+    Object.entries(record).forEach(([key, value]) => {
+        formData.append(key, String(value))
+    })
 }
