@@ -19,7 +19,7 @@
             <Remark :comments="articleData.comments" :id="articleData.id" ref="remarkComponentRef"
                 @comment-posted="handleCommentPosted" />
 
-            <CommentCard v-for="item in comments" :data="item" />
+            <CommentCard v-for="item in comments" :key="item._id" :data="item" @deleted="handleCommentDeleted" />
 
             <div class="article-loadmore-container">
                 <InfiniteScrollContainer :is-finished="isFinished" :load-more="loadMore" />
@@ -49,7 +49,8 @@
     const { queryData, articleData, prev, next, isDataReady, isFinished, comments,
         handleUpdateDataLike,
         handleUpdateDataFavorites, fetchArticleData, loadMore,
-        cleanupuseArticleListByCategory, handleScrollToComment, handleCommentPosted } = useArticleDetail(remarkComponentRef)
+        cleanupuseArticleListByCategory, handleScrollToComment, handleCommentPosted,
+        handleCommentDeleted } = useArticleDetail(remarkComponentRef)
 
     onMounted(async () => {
         await fetchArticleData()

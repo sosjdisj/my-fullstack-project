@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.IdempotencyUtil;
 import com.example.demo.common.JwtUtil;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.model.mongo.Article;
@@ -17,6 +18,7 @@ import com.example.demo.repository.mongo.TagsRepository;
 import com.example.demo.repository.mongo.UserArticleInteractionRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -24,6 +26,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +57,9 @@ public class ArticleService {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     /** 分页查询已发布文章列表，附带分类、标签、作者信息 */
     public Map<String, Object> getArticleList(int page, int size) {
@@ -173,6 +179,8 @@ public class ArticleService {
     /** 用户点赞文章，原子更新点赞数并返回最新点赞数 */
     @Transactional
     public long likeArticle(String articleId, Integer userId) {
+        IdempotencyUtil.checkAndSet(redisTemplate, userId, "like", articleId);
+
         UserArticleInteraction interaction = interactionRepository
                 .findByArticleIdAndUserId(new ObjectId(articleId), userId)
                 .orElseGet(() -> {
@@ -190,7 +198,12 @@ public class ArticleService {
         }
 
         interaction.setIsLiked(true);
-        interactionRepository.save(interaction);
+        try {
+            interactionRepository.save(interaction);
+        } catch (DuplicateKeyException e) {
+            // 并发重复点赞触发 userId+articleId 唯一索引冲突，按业务语义返回
+            throw new BusinessException(400, "已经点赞过了");
+        }
 
         // 更新文章点赞数
         Query query = new Query(Criteria.where("_id").is(new ObjectId(articleId)));
@@ -204,6 +217,8 @@ public class ArticleService {
     /** 用户取消点赞文章，原子更新点赞数并返回最新点赞数 */
     @Transactional
     public long unlikeArticle(String articleId, Integer userId) {
+        IdempotencyUtil.checkAndSet(redisTemplate, userId, "unlike", articleId);
+
         UserArticleInteraction interaction = interactionRepository
                 .findByArticleIdAndUserId(new ObjectId(articleId), userId)
                 .orElseThrow(() -> new BusinessException(400, "未点赞过该文章"));
@@ -227,6 +242,8 @@ public class ArticleService {
     /** 用户收藏文章，原子更新收藏数并返回最新收藏数 */
     @Transactional
     public long collectArticle(String articleId, Integer userId) {
+        IdempotencyUtil.checkAndSet(redisTemplate, userId, "collect", articleId);
+
         UserArticleInteraction interaction = interactionRepository
                 .findByArticleIdAndUserId(new ObjectId(articleId), userId)
                 .orElseGet(() -> {
@@ -244,7 +261,12 @@ public class ArticleService {
         }
 
         interaction.setIsCollected(true);
-        interactionRepository.save(interaction);
+        try {
+            interactionRepository.save(interaction);
+        } catch (DuplicateKeyException e) {
+            // 并发重复收藏触发 userId+articleId 唯一索引冲突，按业务语义返回
+            throw new BusinessException(400, "已经收藏过了");
+        }
 
         // 更新文章收藏数
         Query query = new Query(Criteria.where("_id").is(new ObjectId(articleId)));
@@ -258,6 +280,8 @@ public class ArticleService {
     /** 用户取消收藏文章，原子更新收藏数并返回最新收藏数 */
     @Transactional
     public long uncollectArticle(String articleId, Integer userId) {
+        IdempotencyUtil.checkAndSet(redisTemplate, userId, "uncollect", articleId);
+
         UserArticleInteraction interaction = interactionRepository
                 .findByArticleIdAndUserId(new ObjectId(articleId), userId)
                 .orElseThrow(() -> new BusinessException(400, "未收藏过该文章"));
@@ -311,8 +335,8 @@ public class ArticleService {
         return result;
     }
 
-    /** 创建文章评论，校验频率后保存并返回评论总数 */
-    public long createArticleComment(String articleId, String content, Integer userId) {
+    /** 创建文章评论，校验频率后保存并返回评论总数和新评论ID */
+    public Map<String, Object> createArticleComment(String articleId, String content, Integer userId) {
         checkRecentMessage(userId);
 
         Comments comment = new Comments();
@@ -325,7 +349,22 @@ public class ArticleService {
         comment.setDeleted(false);
         commentsRepository.save(comment);
 
-        return commentsRepository.countByArticleId(new ObjectId(articleId));
+        long count = commentsRepository.countByArticleId(new ObjectId(articleId));
+        // 返回新评论ID，供前端本地插入评论后支持立即删除
+        return Map.of("count", count, "commentId", comment.getId());
+    }
+
+    /** 删除自己的文章评论，校验所有权后软删除 */
+    public void deleteArticleComment(String commentId, Integer userId) {
+        Comments comment = commentsRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(404, "评论不存在"));
+
+        if (!userId.equals(comment.getUserId())) {
+            throw new BusinessException(403, "无权删除该评论");
+        }
+
+        comment.setDeleted(true);
+        commentsRepository.save(comment);
     }
 
     /** 校验用户1分钟内是否评论过，防止刷屏 */

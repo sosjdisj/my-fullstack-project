@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.IdempotencyUtil;
 import com.example.demo.model.mongo.Playlists;
 import com.example.demo.model.mongo.Songs;
 import com.example.demo.model.mongo.UserCollectPlaylists;
@@ -11,6 +12,7 @@ import com.example.demo.repository.mongo.UserCollectPlaylistsRepository;
 import com.example.demo.repository.mongo.UserLikeSongsRepository;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -18,6 +20,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,9 @@ public class PlaylistsService {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     /** 获取按播放量倒序的热门歌单列表 */
     public Map<String, Object> getPlaylist(int limit) {
@@ -139,6 +145,8 @@ public class PlaylistsService {
     /** 用户收藏歌单，更新收藏数并返回最新收藏数 */
     @Transactional
     public Map<String, Object> collectPlaylist(Integer userId, String playlistId) {
+        IdempotencyUtil.checkAndSet(redisTemplate, userId, "collect", playlistId);
+
         UserCollectPlaylists collect = userCollectPlaylistsRepository
                 .findByPlaylistIdAndUserId(new ObjectId(playlistId), userId)
                 .orElseGet(() -> {
@@ -157,7 +165,12 @@ public class PlaylistsService {
         }
 
         collect.setIsCanceled(true);
-        userCollectPlaylistsRepository.save(collect);
+        try {
+            userCollectPlaylistsRepository.save(collect);
+        } catch (DuplicateKeyException e) {
+            // 并发重复收藏触发 userId+playlistId 唯一索引冲突，按业务语义返回
+            throw new BusinessException(400, "已经收藏过了");
+        }
 
         // 增加歌单收藏数
         Query query = new Query(Criteria.where("_id").is(new ObjectId(playlistId)));
@@ -175,6 +188,8 @@ public class PlaylistsService {
     /** 用户取消收藏歌单，更新收藏数并返回最新收藏数 */
     @Transactional
     public Map<String, Object> uncollectPlaylist(Integer userId, String playlistId) {
+        IdempotencyUtil.checkAndSet(redisTemplate, userId, "uncollect", playlistId);
+
         UserCollectPlaylists collect = userCollectPlaylistsRepository
                 .findByPlaylistIdAndUserId(new ObjectId(playlistId), userId)
                 .orElseThrow(() -> new BusinessException(400, "未收藏过该歌单"));

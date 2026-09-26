@@ -237,6 +237,24 @@ async def get_playlist_collect_status(playlist_id: str, token: str = "") -> str:
         }, ensure_ascii=False)
 
 
+@tool
+async def delete_article_comment(comment_id: str, token: str = "") -> str:
+    """删除自己发表的文章评论，需要提供评论 ID 和用户 token"""
+    headers = {}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    async with httpx.AsyncClient(timeout=config.HTTP_TIMEOUT) as client:
+        resp = await client.delete(
+            f"{JAVA_URL}/api/article/comments/{comment_id}",
+            headers=headers,
+        )
+        data = resp.json()
+        return json.dumps({
+            "success": data.get("code", 0) == 200 or data.get("success", False),
+            "message": "评论删除成功" if data.get("code", 0) == 200 or data.get("success") else "评论删除失败",
+        }, ensure_ascii=False)
+
+
 interaction_tools = [
     like_article,
     unlike_article,
@@ -250,4 +268,19 @@ interaction_tools = [
     collect_playlist,
     uncollect_playlist,
     get_playlist_collect_status,
+    delete_article_comment,
 ]
+
+# 会修改数据的写操作工具名集合（get_xxx_status 等查询类除外），
+# 供审计日志与提示词区分读写风险
+WRITE_TOOL_NAMES = {
+    "like_article",
+    "unlike_article",
+    "collect_article",
+    "uncollect_article",
+    "like_song",
+    "unlike_song",
+    "collect_playlist",
+    "uncollect_playlist",
+    "delete_article_comment",
+}

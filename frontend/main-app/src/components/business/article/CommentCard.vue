@@ -12,6 +12,10 @@
                     <span class="username">{{ username }}</span>
                     <span class="post-time">{{ formatDate(createTime) }}</span>
                 </div>
+                <!-- 仅自己发的评论显示删除按钮 -->
+                <div class="interaction-tools" v-if="isMine">
+                    <span class="tool-item" @click="handleDelete">删除</span>
+                </div>
             </div>
 
             <div class="message-body">
@@ -24,12 +28,45 @@
 <script setup lang="ts">
     import type { ArticleComment } from '@/types/index'
     import { formatDate } from '@/utils/helpers'
+    import { Delete } from '@/api/request'
+    import { useUserStore } from '@/stores/user'
 
     const props = defineProps<{
         data: ArticleComment
     }>()
     console.log(props.data)
     const { username, avatar, content, createTime } = props.data
+
+    const emit = defineEmits<{
+        deleted: [commentId: string]
+    }>()
+
+    const userStore = useUserStore()
+
+    // 评论者是自己才显示删除按钮（后端接口同样会做所有权校验）
+    const isMine = computed(() =>
+        props.data.userId != null &&
+        props.data.userId === userStore.userId &&
+        !!props.data.id
+    )
+
+    const handleDelete = async () => {
+        try {
+            await ElMessageBox.confirm('删除后该评论将无法恢复', '删除评论', {
+                confirmButtonText: '删除',
+                cancelButtonText: '取消',
+                type: 'warning',
+            })
+        } catch {
+            return // 用户取消
+        }
+
+        const result = await Delete(`/article/comments/${props.data.id}`)
+        if (result.success) {
+            ElMessage.success(result.message || '删除成功')
+            emit('deleted', props.data.id as string)
+        }
+    }
 </script>
 
 <style lang="less" scoped>

@@ -131,15 +131,23 @@ export function useArticleDetail(remarkComponentRef: Ref<InstanceType<typeof Rem
     }
 
     /** 评论发表成功后，本地插入新评论并更新评论数，无需重新请求 */
-    const handleCommentPosted = ({ content, count }: { content: string, count: number }) => {
+    const handleCommentPosted = ({ commentId, content, count }: { commentId?: string, content: string, count: number }) => {
         articleData.value.comments = count
         comments.value.unshift({
             _id: Date.now(),
+            id: commentId,
+            userId: userStore.userId ?? undefined,
             username: userStore.username ?? '',
             avatar: userStore.avatar ?? '',
             content,
             createTime: new Date().toLocaleDateString('sv-SE')
         } as ArticleComment)
+    }
+
+    /** 评论删除成功后，从列表移除该评论并更新评论数 */
+    const handleCommentDeleted = (commentId: string) => {
+        comments.value = comments.value.filter(item => item.id !== commentId)
+        articleData.value.comments = Math.max(0, articleData.value.comments - 1)
     }
 
     const loadMore = async () => {
@@ -162,6 +170,7 @@ export function useArticleDetail(remarkComponentRef: Ref<InstanceType<typeof Rem
         cleanupuseArticleListByCategory,
         handleScrollToComment,
         handleCommentPosted,
+        handleCommentDeleted,
         loadMore
     }
 }

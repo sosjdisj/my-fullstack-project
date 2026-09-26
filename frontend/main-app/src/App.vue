@@ -40,6 +40,7 @@
           // 验证成功后把 localStorage 中的 token 写回 store，
           // 否则刷新页面后 store.token 为 null，微应用拿不到鉴权信息
           saveUserInfo(store, {
+            userId: userInfo.userId,
             username: userInfo.username,
             avatar: userInfo.avatar,
             signature: userInfo.signature,

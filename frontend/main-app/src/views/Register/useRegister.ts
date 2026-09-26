@@ -59,9 +59,10 @@ export function useRegister() {
         const result = await post('/auth/register', registerPayload)
 
         if (result.success) {
-          const { username, avatar, token } = result.data.data
+          const { userId, username, avatar, token } = result.data.data
 
           saveUserInfo(store, {
+            userId,
             username,
             avatar,
             token

@@ -51,9 +51,10 @@ export function useLogin() {
       }
       const bool = await post('/auth/login', loginPayload)
       if (bool.success) {
-        const { username, avatar, token } = bool.data.data
+        const { userId, username, avatar, token } = bool.data.data
 
         saveUserInfo(store, {
+          userId,
           username,
           avatar,
           token

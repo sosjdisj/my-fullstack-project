@@ -23,6 +23,7 @@ public class VerifyController {
         }
 
         Map<String, Object> data = Map.of(
+                "userId", auth.getUserId(),
                 "username", auth.getUsername() != null ? auth.getUsername() : "",
                 "avatar", auth.getCover() != null ? auth.getCover() : "",
                 "signature", auth.getSignature() != null ? auth.getSignature() : ""

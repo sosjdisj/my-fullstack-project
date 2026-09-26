@@ -50,6 +50,8 @@ export interface RandomArticle {
 
 export interface ArticleComment {
     _id: number;
+    id?: string; // 后端返回的评论ID，用于删除自己的评论
+    userId?: number; // 评论者ID，用于判断是否是自己发的评论
     username: string;
     avatar: string;
     content: string;

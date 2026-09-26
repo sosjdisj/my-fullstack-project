@@ -53,6 +53,7 @@ service.interceptors.response.use(
                         const store = useUserStore();
 
                         saveUserInfo(store, {
+                            userId: Data.userId,
                             username: Data.username,
                             token: newToken,
                             avatar: Data.avatar,

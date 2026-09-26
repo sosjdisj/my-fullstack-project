@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.common.BusinessException;
+import com.example.demo.common.IdempotencyUtil;
 import com.example.demo.model.mongo.SongTags;
 import com.example.demo.model.mongo.Songs;
 import com.example.demo.model.mongo.UserLikeSongs;
@@ -10,11 +11,13 @@ import com.example.demo.repository.mongo.UserLikeSongsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,9 @@ public class SongsService {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     /** 分页查询用户点赞的歌曲列表 */
     public Map<String, Object> getLikeSongs(Integer userId, int page, int size) {
@@ -87,6 +93,8 @@ public class SongsService {
     /** 用户点赞歌曲，更新点赞数并返回最新点赞数 */
     @Transactional
     public Map<String, Object> likeSong(Integer userId, String songId) {
+        IdempotencyUtil.checkAndSet(redisTemplate, userId, "like", songId);
+
         UserLikeSongs userLikeSong = userLikeSongsRepository
                 .findByUserIdAndSongId(userId, new ObjectId(songId))
                 .orElseGet(() -> {
@@ -103,7 +111,12 @@ public class SongsService {
         }
 
         userLikeSong.setIsLiked(true);
-        userLikeSongsRepository.save(userLikeSong);
+        try {
+            userLikeSongsRepository.save(userLikeSong);
+        } catch (DuplicateKeyException e) {
+            // 并发重复点赞触发 userId+songId 唯一索引冲突，按业务语义返回
+            throw new BusinessException(400, "已经点赞过了");
+        }
 
         // 增加歌曲点赞数
         Query query = new Query(Criteria.where("_id").is(new ObjectId(songId)));
@@ -121,6 +134,8 @@ public class SongsService {
     /** 用户取消点赞歌曲，更新点赞数并返回最新点赞数 */
     @Transactional
     public Map<String, Object> unlikeSong(Integer userId, String songId) {
+        IdempotencyUtil.checkAndSet(redisTemplate, userId, "unlike", songId);
+
         UserLikeSongs userLikeSong = userLikeSongsRepository
                 .findByUserIdAndSongId(userId, new ObjectId(songId))
                 .orElseThrow(() -> new BusinessException(400, "未点赞过该歌曲"));

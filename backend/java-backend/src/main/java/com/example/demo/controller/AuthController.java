@@ -85,6 +85,7 @@ public class AuthController {
 
         Map<String, Object> data = new HashMap<>();
         data.put("token", accessToken);
+        data.put("userId", user.getUserId());
         data.put("username", user.getUsername());
         data.put("avatar", user.getCover());
         data.put("signature", user.getSignature());
@@ -126,6 +127,7 @@ public class AuthController {
 
         Map<String, Object> data = new HashMap<>();
         data.put("token", pair.accessToken());
+        data.put("userId", user.getUserId());
         data.put("username", username);
         data.put("avatar", user.getCover());
 
@@ -204,6 +206,7 @@ public class AuthController {
 
         Map<String, Object> data = new HashMap<>();
         data.put("token", pair.accessToken());
+        data.put("userId", decoded.getUserId());
         data.put("username", decoded.getUsername());
         data.put("avatar", decoded.getCover());
         data.put("signature", decoded.getSignature());

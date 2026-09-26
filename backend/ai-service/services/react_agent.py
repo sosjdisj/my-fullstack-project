@@ -25,6 +25,7 @@ from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 
 import config
+from tools.interaction_tools import WRITE_TOOL_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,7 @@ SYSTEM_PROMPT = """你是一个友好、活泼的博客 AI 助手，可以用工
 7. 最多进行 5 轮工具调用循环，避免无限调用工具。
 8. 当用户问题涉及多个不同类型的查询（如同时问文章和歌单），尽量在一次回复中并行调用多个工具，节省轮数。
 9. 绝对不要提及"数据库""收录""系统""索引"等技术实现细节，始终从用户视角自然地回答。
+10. 执行点赞/收藏/删除评论等写操作前，先用对应的 get_xxx_status 工具查询状态，已点赞/已收藏则直接告知用户，不要重复执行；写操作失败时不要自动重试，直接把结果告诉用户。
 
 **可用工具列表：**
 {tool_names_with_description}"""
@@ -133,6 +135,9 @@ class ReActAgent:
         if not tool:
             available = ", ".join(self.tool_map.keys())
             return f"错误：未知工具 '{name}'。可用工具：{available}"
+
+        # 写操作审计日志：记录工具名及读写类型
+        logger.info(f"[工具审计] {name} ({'写操作' if name in WRITE_TOOL_NAMES else '查询'})")
 
         try:
             # 注入 token（业务工具靠它调 Java 后端）。

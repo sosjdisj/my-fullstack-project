@@ -38,7 +38,7 @@ TOOL_GROUPS = [
     ("音乐与歌单", songs_tools + playlists_tools),
     ("标签与分类", tags_tools + categories_tools),
     ("社区动态", timeline_tools + treehole_tools + quotes_tools),
-    ("用户互动（点赞/收藏，需登录）", interaction_tools),
+    ("用户互动（写操作·需登录，点赞/收藏/评论）", interaction_tools),
 ]
 
 # 使用 ReAct Agent 替代原来的 create_agent

@@ -6,6 +6,7 @@ import { useCacheStore } from '@/stores/cache'
 
 export function clearUser() {
     const store = useUserStore()
+    store.userId = null
     store.username = null
     store.avatar = null
     store.signature = ''
@@ -146,9 +147,10 @@ export const scrollToComment = (el: HTMLElement) => {
 // };
 
 export function saveUserInfo(
-    store: { username: string | null; avatar: string | null; token: string | null, signature: string },
-    data: { username: string; avatar: string; signature?: string, token?: string }
+    store: { userId: number | null; username: string | null; avatar: string | null; token: string | null, signature: string },
+    data: { userId?: number; username: string; avatar: string; signature?: string, token?: string }
 ) {
+    store.userId = data.userId ?? null
     store.username = data.username
     store.avatar = data.avatar
     store.signature = data.signature || ''

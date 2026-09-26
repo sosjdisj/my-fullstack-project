@@ -116,8 +116,16 @@ public class ArticleController {
         JwtUtil.UserInfo auth = getAuth(request);
         String content = body.get("content");
         ValidationUtil.checkContent(content, 500, "评论内容");
-        long count = articleService.createArticleComment(id, content, auth.getUserId());
-        return ApiResponse.success("评论成功", Map.of("count", count));
+        Map<String, Object> result = articleService.createArticleComment(id, content, auth.getUserId());
+        return ApiResponse.success("评论成功", result);
+    }
+
+    /** 删除自己的文章评论 */
+    @DeleteMapping("/comments/{commentId}")
+    public ApiResponse<Void> deleteArticleComment(@PathVariable String commentId, HttpServletRequest request) {
+        JwtUtil.UserInfo auth = getAuth(request);
+        articleService.deleteArticleComment(commentId, auth.getUserId());
+        return ApiResponse.success("删除成功", null);
     }
 
     /** 从请求中获取登录用户信息，未登录则抛出异常 */

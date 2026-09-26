@@ -55,7 +55,7 @@
     const content = ref('')
 
     const emit = defineEmits<{
-        commentPosted: [payload: { content: string, count: number }]
+        commentPosted: [payload: { commentId?: string, content: string, count: number }]
     }>()
 
     const remark = ref<HTMLDivElement | null>(null)
@@ -85,7 +85,7 @@
             if (result.success) {
                 ElMessage.success(result.message)
                 // 通知父组件插入新评论并更新评论数（后端按时间倒序，插到列表头部即为最新）
-                emit('commentPosted', { content: content.value.trim(), count: result.data?.data?.count })
+                emit('commentPosted', { commentId: result.data?.data?.commentId, content: content.value.trim(), count: result.data?.data?.count })
                 content.value = ''
                 isYulan.value = false
             }
